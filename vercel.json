@@ -11,6 +11,7 @@
     { "source": "/api/months/:id/moments", "destination": "/api/months?id=:id&sub=moments" },
     { "source": "/api/months/:id", "destination": "/api/months?id=:id" },
     { "source": "/api/discoveries/:id", "destination": "/api/discoveries?id=:id" },
+    { "source": "/api/photos/:id", "destination": "/api/photos?id=:id" },
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
