@@ -1,10 +1,15 @@
 .goals-page { padding-bottom: 2rem; }
 
-/* Filtros dropdown */
+.goals-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.75rem;
+}
+
 .goals-filter-row {
   display: flex;
   gap: 1rem;
-  margin-bottom: 1.75rem;
   flex-wrap: wrap;
 }
 
@@ -37,7 +42,39 @@
 
 .filter-select:focus { border-color: var(--toffee); outline: none; }
 
-/* Seção recolhível */
+.goals-search {
+  position: relative;
+  max-width: 320px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.5rem 2rem 0.5rem 0.9rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--card);
+  font-size: 0.85rem;
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  transition: border-color 0.2s;
+}
+
+.search-input:focus { border-color: var(--toffee); outline: none; }
+
+.search-clear {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
 .goals-section { margin-bottom: 1.5rem; }
 
 .goals-section-toggle {
@@ -53,7 +90,10 @@
   text-align: left;
   margin-bottom: 0.85rem;
   gap: 0.5rem;
+  transition: opacity 0.2s;
 }
+
+.goals-section-toggle:hover { opacity: 0.75; }
 
 .goals-section-toggle-left {
   display: flex;
@@ -69,19 +109,29 @@
   font-style: italic;
 }
 
-.section-chevron {
-  font-size: 0.6rem;
+.section-chevron { font-size: 0.6rem; color: var(--text-muted); flex-shrink: 0; }
+
+.goals-list { display: flex; flex-direction: column; gap: 0.75rem; }
+
+.goals-empty-section {
+  text-align: center;
+  padding: 1.5rem 1rem;
   color: var(--text-muted);
-  flex-shrink: 0;
 }
 
-.goals-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+.goals-empty-icon {
+  font-size: 0.9rem;
+  letter-spacing: 0.3em;
+  margin-bottom: 0.4rem;
+  color: var(--border);
 }
 
-/* Goal card */
+.goals-empty-text {
+  font-size: 0.83rem;
+  font-style: italic;
+  font-family: 'Lora', serif;
+}
+
 .goal-card { transition: box-shadow 0.2s; }
 .goal-card:hover { box-shadow: var(--shadow); }
 
@@ -114,7 +164,6 @@
   margin-bottom: 0.75rem;
 }
 
-/* Checkboxes reais */
 .goal-checkboxes { margin: 0.75rem 0 0.5rem; }
 
 .checkboxes-label {
@@ -125,11 +174,7 @@
   margin-bottom: 0.5rem;
 }
 
-.checkboxes-row {
-  display: flex;
-  gap: 1.25rem;
-  flex-wrap: wrap;
-}
+.checkboxes-row { display: flex; gap: 1.25rem; flex-wrap: wrap; }
 
 .checkbox-item {
   display: flex;
@@ -146,23 +191,13 @@
   flex-shrink: 0;
   margin: 0;
   padding: 0;
-  border-radius: 3px;
 }
 
-.checkbox-label {
-  font-size: 0.83rem;
-  color: var(--text-soft);
-}
-
+.checkbox-label { font-size: 0.83rem; color: var(--text-soft); }
 .checkbox-label.achieved     { color: var(--shared); }
 .checkbox-label.not-achieved { color: var(--terra); }
 
-/* Actions */
-.goal-card-actions {
-  display: flex;
-  gap: 0.4rem;
-  margin-top: 0.75rem;
-}
+.goal-card-actions { display: flex; gap: 0.4rem; margin-top: 0.75rem; }
 
 .goals-empty {
   text-align: center;

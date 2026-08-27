@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useToast } from '../components/Toast'
 import '../styles/goals.css'
 
 const MONTHS = ['Setembro', 'Outubro', 'Novembro', 'Dezembro']
@@ -11,7 +12,7 @@ function ConfirmModal({ message, onConfirm, onCancel }) {
         <p style={{ fontSize: '0.9rem', color: 'var(--text-soft)', marginBottom: '1.25rem' }}>{message}</p>
         <div className="modal-actions">
           <button className="btn btn-ghost" onClick={onCancel}>Cancelar</button>
-          <button className="btn btn-danger" onClick={onConfirm}>Remover</button>
+          <button className="btn btn-danger" onClick={onConfirm}>Confirmar</button>
         </div>
       </div>
     </div>
@@ -41,28 +42,18 @@ function GoalFormModal({ goal, onClose, onSave, person1, person2 }) {
 
         <div className="form-group">
           <label>Título</label>
-          <input
-            type="text"
-            value={form.title}
-            onChange={e => set('title', e.target.value)}
-            placeholder="Ex: Ler 3 livros"
-          />
+          <input type="text" value={form.title} onChange={e => set('title', e.target.value)} placeholder="Ex: Ler 3 livros" autoFocus />
         </div>
 
         <div className="form-group">
           <label>Descrição</label>
-          <textarea
-            value={form.description}
-            onChange={e => set('description', e.target.value)}
-            placeholder="Uma frase sobre esse objetivo..."
-            rows={2}
-          />
+          <textarea value={form.description} onChange={e => set('description', e.target.value)} placeholder="Uma frase sobre esse objetivo..." rows={2} />
         </div>
 
         <div className="form-group">
           <label>Quem é esse objetivo?</label>
           <select value={form.type} onChange={e => set('type', e.target.value)}>
-            <option value="shared">♡ Nosso (compartilhado)</option>
+            <option value="shared">Nosso (compartilhado)</option>
             <option value="person1">{person1}</option>
             <option value="person2">{person2}</option>
           </select>
@@ -79,14 +70,15 @@ function GoalFormModal({ goal, onClose, onSave, person1, person2 }) {
 
 function GoalCard({ goal, person1, person2, onClose, onDelete, onEdit }) {
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [confirmClose, setConfirmClose]   = useState(null)
 
   const ownerLabel =
-    goal.type === 'shared'  ? '♡ Nosso' :
+    goal.type === 'shared'  ? 'Nosso' :
     goal.type === 'person1' ? person1 : person2
 
   function handleCheck(status) {
     if (goal.status === status) return
-    onClose(goal.id, status)
+    setConfirmClose(status)
   }
 
   return (
@@ -98,54 +90,60 @@ function GoalCard({ goal, person1, person2, onClose, onDelete, onEdit }) {
           onCancel={() => setConfirmDelete(false)}
         />
       )}
+      {confirmClose && (
+        <ConfirmModal
+          message={confirmClose === 'done'
+            ? `Marcar "${goal.title}" como conseguido? Ele vai para o histórico.`
+            : `Marcar "${goal.title}" como não conseguido? Ele vai para o histórico.`}
+          onConfirm={() => { onClose(goal.id, confirmClose); setConfirmClose(null) }}
+          onCancel={() => setConfirmClose(null)}
+        />
+      )}
 
       <div className="goal-card-header">
         <h3 className="goal-card-title">{goal.title}</h3>
         <span className="goal-owner-tag">{ownerLabel}</span>
       </div>
 
-      {goal.description && (
-        <p className="goal-card-desc">{goal.description}</p>
-      )}
+      {goal.description && <p className="goal-card-desc">{goal.description}</p>}
 
       <div className="goal-checkboxes">
         <p className="checkboxes-label">Como foi no final do mês?</p>
         <div className="checkboxes-row">
           <label className="checkbox-item">
-            <input
-              type="checkbox"
-              checked={goal.status === 'done'}
-              onChange={() => handleCheck('done')}
-            />
+            <input type="checkbox" checked={goal.status === 'done'} onChange={() => handleCheck('done')} />
             <span className="checkbox-label achieved">Conseguimos</span>
           </label>
           <label className="checkbox-item">
-            <input
-              type="checkbox"
-              checked={goal.status === 'not_achieved'}
-              onChange={() => handleCheck('not_achieved')}
-            />
+            <input type="checkbox" checked={goal.status === 'not_achieved'} onChange={() => handleCheck('not_achieved')} />
             <span className="checkbox-label not-achieved">Não conseguimos</span>
           </label>
         </div>
       </div>
 
       <div className="goal-card-actions">
-        <button className="btn btn-ghost btn-sm" onClick={() => onEdit(goal)}>
-          Editar
-        </button>
-        <button className="btn btn-danger btn-sm" onClick={() => setConfirmDelete(true)}>
-          Remover
-        </button>
+        <button className="btn btn-ghost btn-sm" onClick={() => onEdit(goal)}>Editar</button>
+        <button className="btn btn-danger btn-sm" onClick={() => setConfirmDelete(true)}>Remover</button>
       </div>
     </div>
   )
 }
 
-function GoalSection({ label, sub, goals, person1, person2, onClose, onDelete, onEdit }) {
+function EmptySection({ label }) {
+  return (
+    <div className="goals-empty-section">
+      <p className="goals-empty-icon">·  ·  ·</p>
+      <p className="goals-empty-text">Nenhum objetivo em <em>{label}</em> ainda.</p>
+    </div>
+  )
+}
+
+function GoalSection({ label, sub, goals, person1, person2, onClose, onDelete, onEdit, searchTerm }) {
   const [collapsed, setCollapsed] = useState(false)
 
-  if (goals.length === 0) return null
+  const filtered = searchTerm
+    ? goals.filter(g => g.title.toLowerCase().includes(searchTerm.toLowerCase()))
+    : goals
 
   return (
     <div className="goals-section">
@@ -159,17 +157,20 @@ function GoalSection({ label, sub, goals, person1, person2, onClose, onDelete, o
 
       {!collapsed && (
         <div className="goals-list">
-          {goals.map(g => (
-            <GoalCard
-              key={g.id}
-              goal={g}
-              person1={person1}
-              person2={person2}
-              onClose={onClose}
-              onDelete={onDelete}
-              onEdit={onEdit}
-            />
-          ))}
+          {filtered.length === 0
+            ? <EmptySection label={label} />
+            : filtered.map(g => (
+              <GoalCard
+                key={g.id}
+                goal={g}
+                person1={person1}
+                person2={person2}
+                onClose={onClose}
+                onDelete={onDelete}
+                onEdit={onEdit}
+              />
+            ))
+          }
         </div>
       )}
     </div>
@@ -178,10 +179,13 @@ function GoalSection({ label, sub, goals, person1, person2, onClose, onDelete, o
 
 export default function Goals({ data, reload }) {
   const { goals, settings } = data
-  const [modal, setModal]           = useState(false)
-  const [editGoal, setEditGoal]     = useState(null)
-  const [typeFilter, setTypeFilter] = useState('all')
+  const toast = useToast()
+
+  const [modal, setModal]             = useState(false)
+  const [editGoal, setEditGoal]       = useState(null)
+  const [typeFilter, setTypeFilter]   = useState('all')
   const [monthFilter, setMonthFilter] = useState('all')
+  const [searchTerm, setSearchTerm]   = useState('')
 
   const active = goals.filter(g => g.status !== 'done' && g.status !== 'not_achieved')
 
@@ -200,6 +204,7 @@ export default function Goals({ data, reload }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form)
       })
+      toast('Objetivo atualizado')
     } else {
       const now = new Date()
       const monthNames = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
@@ -217,6 +222,7 @@ export default function Goals({ data, reload }) {
           createdAt: now.toISOString().split('T')[0]
         })
       })
+      toast('Objetivo criado')
     }
     reload()
   }
@@ -234,18 +240,20 @@ export default function Goals({ data, reload }) {
         closedMonth: monthNames[now.getMonth()]
       })
     })
+    toast(status === 'done' ? 'Objetivo concluído' : 'Objetivo encerrado', 'info')
     reload()
   }
 
   async function deleteGoal(id) {
     await fetch(`/api/goals/${id}`, { method: 'DELETE' })
+    toast('Objetivo removido', 'error')
     reload()
   }
 
   const sections = [
-    { label: '♡ Nossos objetivos', type: 'shared',  sub: 'O que queremos fazer juntos.' },
-    { label: settings.person1,     type: 'person1', sub: 'Objetivos pessoais.' },
-    { label: settings.person2,     type: 'person2', sub: 'Objetivos pessoais.' },
+    { label: 'Nossos objetivos', type: 'shared',  sub: 'O que queremos fazer juntos.' },
+    { label: settings.person1,  type: 'person1',  sub: 'Objetivos pessoais.' },
+    { label: settings.person2,  type: 'person2',  sub: 'Objetivos pessoais.' },
   ]
 
   const visibleSections = typeFilter === 'all'
@@ -254,7 +262,7 @@ export default function Goals({ data, reload }) {
 
   const typeOptions = [
     { value: 'all',     label: 'Todos' },
-    { value: 'shared',  label: '♡ Nossos' },
+    { value: 'shared',  label: 'Nossos' },
     { value: 'person1', label: settings.person1 },
     { value: 'person2', label: settings.person2 },
   ]
@@ -269,32 +277,33 @@ export default function Goals({ data, reload }) {
         <button className="btn btn-primary" onClick={() => setModal(true)}>+ Novo</button>
       </div>
 
-      <div className="goals-filter-row">
-        <div className="filter-group">
-          <label className="filter-label">Categoria</label>
-          <select
-            className="filter-select"
-            value={typeFilter}
-            onChange={e => setTypeFilter(e.target.value)}
-          >
-            {typeOptions.map(o => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
+      <div className="goals-controls">
+        <div className="goals-filter-row">
+          <div className="filter-group">
+            <label className="filter-label">Categoria</label>
+            <select className="filter-select" value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
+              {typeOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          </div>
+          <div className="filter-group">
+            <label className="filter-label">Mês</label>
+            <select className="filter-select" value={monthFilter} onChange={e => setMonthFilter(e.target.value)}>
+              <option value="all">Todos os meses</option>
+              {MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
+            </select>
+          </div>
         </div>
-
-        <div className="filter-group">
-          <label className="filter-label">Mês</label>
-          <select
-            className="filter-select"
-            value={monthFilter}
-            onChange={e => setMonthFilter(e.target.value)}
-          >
-            <option value="all">Todos os meses</option>
-            {MONTHS.map(m => (
-              <option key={m} value={m}>{m}</option>
-            ))}
-          </select>
+        <div className="goals-search">
+          <input
+            type="text"
+            placeholder="Buscar objetivo..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className="search-input"
+          />
+          {searchTerm && (
+            <button className="search-clear" onClick={() => setSearchTerm('')}>×</button>
+          )}
         </div>
       </div>
 
@@ -309,17 +318,9 @@ export default function Goals({ data, reload }) {
           onClose={closeGoal}
           onDelete={deleteGoal}
           onEdit={g => setEditGoal(g)}
+          searchTerm={searchTerm}
         />
       ))}
-
-      {applyFilters(active).length === 0 && (
-        <div className="goals-empty">
-          <p>Nenhum objetivo encontrado.</p>
-          <p className="section-sub" style={{ marginTop: '0.4rem' }}>
-            Oi mo te amo
-          </p>
-        </div>
-      )}
 
       {modal && (
         <GoalFormModal

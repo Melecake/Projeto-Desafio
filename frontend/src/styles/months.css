@@ -9,14 +9,10 @@
   line-height: 1.7;
 }
 
-.months-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-bottom: 2rem;
-}
+.months-list { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 2rem; }
 
-.month-entry { padding: 0; overflow: hidden; }
+.month-entry { padding: 0; overflow: hidden; transition: box-shadow 0.2s; }
+.month-entry.current-month { border-color: var(--tan); box-shadow: 0 0 0 2px var(--sand); }
 
 .month-header {
   width: 100%;
@@ -34,16 +30,19 @@
 
 .month-header:hover { background: var(--accent-pale); }
 
-.month-header-left {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
+.month-header-left { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
 
-.month-name {
-  font-family: 'Lora', serif;
-  font-size: 1rem;
-  color: var(--text);
+.month-name { font-family: 'Lora', serif; font-size: 1rem; color: var(--text); }
+
+.month-current-tag {
+  font-size: 0.68rem;
+  background: var(--tan);
+  color: var(--coffee);
+  padding: 0.15rem 0.5rem;
+  border-radius: 99px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .month-status { font-size: 0.75rem; font-style: italic; }
@@ -66,17 +65,9 @@
   margin-bottom: 0.75rem;
 }
 
-.month-section-title {
-  font-size: 0.92rem;
-  color: var(--text);
-  font-family: 'Lora', serif;
-}
+.month-section-title { font-size: 0.92rem; color: var(--text); font-family: 'Lora', serif; }
 
-.month-reflections {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
+.month-reflections { display: flex; flex-direction: column; gap: 0.75rem; }
 
 .reflection-block {
   background: var(--surface);
@@ -97,21 +88,10 @@
   margin-bottom: 0.35rem;
 }
 
-.reflection-text {
-  font-size: 0.88rem;
-  color: var(--text);
-  line-height: 1.65;
-  white-space: pre-wrap;
-}
-
+.reflection-text { font-size: 0.88rem; color: var(--text); line-height: 1.65; white-space: pre-wrap; }
 .reflection-text.muted { color: var(--text-muted); font-style: italic; }
 
-.month-items-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  margin-bottom: 0.75rem;
-}
+.month-items-list { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 0.75rem; }
 
 .month-item {
   display: flex;
@@ -122,14 +102,8 @@
   padding: 0.3rem 0;
 }
 
-.month-item.special .month-item-bullet { color: var(--heart); }
-
-.month-item-bullet {
-  color: var(--accent-soft);
-  flex-shrink: 0;
-  margin-top: 0.1rem;
-}
-
+.month-item.special .month-item-bullet { color: var(--toffee); }
+.month-item-bullet { color: var(--accent-soft); flex-shrink: 0; margin-top: 0.1rem; }
 .month-item-text { flex: 1; line-height: 1.5; }
 
 .month-item-del {
@@ -147,35 +121,12 @@
 
 .month-item-del:hover { opacity: 1; color: var(--terra); }
 
-.month-add-row {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-}
-
-.month-add-row input { flex: 1; }
-
-.months-reunion {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.5rem;
-  background: var(--terra-pale);
-  border-radius: var(--radius);
-  border: 1px solid #e8d5ce;
-  margin-top: 1rem;
-}
-
-.reunion-icon { font-size: 1.5rem; color: var(--heart); }
-
-.reunion-label {
-  font-family: 'Lora', serif;
-  font-size: 0.95rem;
-  color: var(--text);
-}
-
-.reunion-sub {
-  font-size: 0.8rem;
-  color: var(--text-soft);
+.month-empty-hint {
+  font-size: 0.78rem;
+  color: var(--text-muted);
   font-style: italic;
+  padding: 0.25rem 0;
 }
+
+.month-add-row { display: flex; gap: 0.5rem; align-items: center; }
+.month-add-row input { flex: 1; }

@@ -1,10 +1,10 @@
 export default function Sidebar({ page, setPage }) {
   const links = [
-    { id: 'home',        label: 'Início' },
-    { id: 'goals',       label: 'Objetivos' },
+    { id: 'home',        label: 'Início'       },
+    { id: 'goals',       label: 'Objetivos'    },
     { id: 'months',      label: 'Nossos Meses' },
-    { id: 'discoveries', label: 'Descobertas' },
-    { id: 'history',     label: 'Histórico' },
+    { id: 'discoveries', label: 'Descobertas'  },
+    { id: 'history',     label: 'Histórico'    },
   ]
 
   return (
@@ -16,6 +16,7 @@ export default function Sidebar({ page, setPage }) {
         {links.map(l => (
           <button
             key={l.id}
+            data-page={l.id}
             className={`nav-btn ${page === l.id ? 'active' : ''}`}
             onClick={() => setPage(l.id)}
           >

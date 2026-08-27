@@ -5,6 +5,7 @@ import Goals from './pages/Goals'
 import Months from './pages/Months'
 import Discoveries from './pages/Discoveries'
 import History from './pages/History'
+import { SkeletonPage } from './components/Skeleton'
 
 export default function App() {
   const [page, setPage]   = useState('home')
@@ -31,20 +32,20 @@ export default function App() {
     <div className="loading" style={{ flexDirection: 'column', gap: '1rem', padding: '2rem', textAlign: 'center' }}>
       <p style={{ color: '#c47a7a', fontFamily: 'Lora, serif' }}>Erro ao carregar os dados</p>
       <pre style={{ fontSize: '0.75rem', color: '#9c8878', whiteSpace: 'pre-wrap', maxWidth: '600px' }}>{error}</pre>
-      <button
-        onClick={loadData}
-        style={{ marginTop: '0.5rem', padding: '0.5rem 1.25rem', borderRadius: '20px',
-                 border: '1px solid #d6cdc0', background: 'none', cursor: 'pointer',
-                 fontFamily: 'Inter, sans-serif', color: '#7f5539' }}
-      >
+      <button onClick={loadData} style={{ marginTop: '0.5rem', padding: '0.5rem 1.25rem', borderRadius: '20px', border: '1px solid #d6cdc0', background: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif', color: '#7f5539' }}>
         Tentar novamente
       </button>
     </div>
   )
 
   if (!data) return (
-    <div className="loading">
-      <p>Carregando o Momorecos Challenge...</p>
+    <div className="app">
+      <Sidebar page={page} setPage={setPage} />
+      <div className="main-wrapper">
+        <main className="main-content">
+          <SkeletonPage />
+        </main>
+      </div>
     </div>
   )
 
