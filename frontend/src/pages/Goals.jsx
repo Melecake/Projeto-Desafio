@@ -316,7 +316,7 @@ export default function Goals({ data, reload }) {
         <div className="goals-empty">
           <p>Nenhum objetivo encontrado.</p>
           <p className="section-sub" style={{ marginTop: '0.4rem' }}>
-            Adicione o primeiro quando estiverem na chamada juntos ♡
+            Oi mo te amo
           </p>
         </div>
       )}

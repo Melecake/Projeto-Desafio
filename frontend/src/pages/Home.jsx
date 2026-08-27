@@ -2,20 +2,21 @@ import { useState, useEffect, useRef } from 'react'
 import '../styles/home.css'
 
 function PhotoCarousel() {
-  const [photos, setPhotos]   = useState([])
-  const [current, setCurrent] = useState(0)
+  const [photos, setPhotos]     = useState([])
+  const [current, setCurrent]   = useState(0)
+  const [animating, setAnimating] = useState(false)
   const timerRef = useRef(null)
 
   useEffect(() => {
     fetch('/api/photos')
       .then(r => r.json())
-      .then(list => { if (list.length) setPhotos(list) })
+      .then(list => { if (Array.isArray(list) && list.length) setPhotos(list) })
   }, [])
 
   function startTimer(list) {
     clearInterval(timerRef.current)
     timerRef.current = setInterval(() => {
-      setCurrent(c => (c + 1) % list.length)
+      goTo(idx => (idx + 1) % list.length)
     }, 10000)
   }
 
@@ -25,39 +26,54 @@ function PhotoCarousel() {
     return () => clearInterval(timerRef.current)
   }, [photos])
 
-  if (photos.length === 0) return null
-
-  const total  = photos.length
-  const prev   = (current - 1 + total) % total
-  const next   = (current + 1) % total
-
-  function go(idx) {
-    setCurrent(idx)
-    startTimer(photos)
+  function goTo(getNext) {
+    if (animating) return
+    setAnimating(true)
+    setTimeout(() => {
+      setCurrent(c => {
+        const next = typeof getNext === 'function' ? getNext(c) : getNext
+        return next
+      })
+      setAnimating(false)
+    }, 400)
   }
 
-  // para N < 3 evitar duplicar o mesmo slide
-  const showPrev = total >= 2
-  const showNext = total >= 3 || (total === 2 && prev !== next)
+  function go(idx) {
+    clearInterval(timerRef.current)
+    goTo(idx)
+    if (photos.length >= 2) startTimer(photos)
+  }
+
+  function prev() { go((current - 1 + photos.length) % photos.length) }
+  function next() { go((current + 1) % photos.length) }
+
+  if (photos.length === 0) return null
+
+  const total    = photos.length
+  const prevIdx  = (current - 1 + total) % total
+  const nextIdx  = (current + 1) % total
+  const showSide = total >= 3
 
   return (
     <div className="carousel">
-      <div className="carousel-stage">
+      <div className={`carousel-stage ${animating ? 'animating' : ''}`}>
 
-        {showPrev && (
-          <div className="carousel-side prev-side" onClick={() => go(prev)}>
-            <img src={photos[prev]} alt="" className="carousel-side-img" />
+        {showSide && (
+          <div className="carousel-side prev-side" onClick={prev}>
+            <img src={photos[prevIdx]} alt="" className="carousel-side-img" />
             <div className="carousel-side-overlay" />
           </div>
         )}
 
         <div className="carousel-main">
           <img src={photos[current]} alt="" className="carousel-main-img" />
+          <button className="carousel-btn prev" onClick={prev}>‹</button>
+          <button className="carousel-btn next" onClick={next}>›</button>
         </div>
 
-        {showNext && (
-          <div className="carousel-side next-side" onClick={() => go(next)}>
-            <img src={photos[next]} alt="" className="carousel-side-img" />
+        {showSide && (
+          <div className="carousel-side next-side" onClick={next}>
+            <img src={photos[nextIdx]} alt="" className="carousel-side-img" />
             <div className="carousel-side-overlay" />
           </div>
         )}
@@ -76,6 +92,7 @@ function PhotoCarousel() {
     </div>
   )
 }
+
 export default function Home({ data }) {
   const { goals, months, settings } = data
 
