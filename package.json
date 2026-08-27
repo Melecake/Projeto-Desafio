@@ -1,13 +1,14 @@
 {
-  "name": "nosso-desafio",
+  "name": "momorecos-challenge",
   "version": "1.0.0",
+  "type": "module",
   "scripts": {
     "backend": "node backend/server.js",
     "frontend": "cd frontend && npm run dev",
     "dev": "concurrently \"npm run backend\" \"npm run frontend\""
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.112.4",
+    "@supabase/supabase-js": "^2.39.0",
     "concurrently": "^8.2.2",
     "cors": "^2.8.5",
     "express": "^4.18.2"

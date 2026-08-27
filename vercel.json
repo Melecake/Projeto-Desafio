@@ -1,5 +1,16 @@
 {
+  "buildCommand": "cd frontend && npm install && npm run build",
+  "outputDirectory": "frontend/dist",
+  "framework": null,
   "rewrites": [
-    { "source": "/api/:path*", "destination": "/api/:path*" }
+    { "source": "/api/goals/:id", "destination": "/api/goals?id=:id" },
+    { "source": "/api/months/:id/events/:subId", "destination": "/api/months?id=:id&sub=events&subId=:subId" },
+    { "source": "/api/months/:id/moments/:subId", "destination": "/api/months?id=:id&sub=moments&subId=:subId" },
+    { "source": "/api/months/:id/events", "destination": "/api/months?id=:id&sub=events" },
+    { "source": "/api/months/:id/moments", "destination": "/api/months?id=:id&sub=moments" },
+    { "source": "/api/months/:id", "destination": "/api/months?id=:id" },
+    { "source": "/api/discoveries/:id", "destination": "/api/discoveries?id=:id" },
+    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
