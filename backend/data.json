@@ -1,0 +1,131 @@
+{
+  "settings": {
+    "reunionDate": "2026-12-18",
+    "person1": "João",
+    "person2": "Marianna"
+  },
+  "goals": [
+    {
+      "id": "g1",
+      "title": "Ler 3 livros",
+      "description": "Uma coisa que quero fazer durante esse período.",
+      "type": "person1",
+      "status": "in_progress",
+      "progress": 100,
+      "note": "",
+      "history": [
+        {
+          "month": "setembro",
+          "progress": 0,
+          "note": "Começamos",
+          "date": "2026-09-01"
+        },
+        {
+          "month": "agosto",
+          "progress": 100,
+          "note": "",
+          "date": "2026-08-19"
+        }
+      ],
+      "createdAt": "2026-09-01",
+      "closedMonth": null
+    },
+    {
+      "id": "g2",
+      "title": "Aprender a cozinhar 3 receitas novas",
+      "description": "Experimentar coisas na cozinha enquanto estiver morando sozinha.",
+      "type": "person2",
+      "status": "in_progress",
+      "progress": 0,
+      "note": "",
+      "history": [
+        {
+          "month": "agosto",
+          "progress": 100,
+          "note": "",
+          "date": "2026-08-19"
+        },
+        {
+          "month": "agosto",
+          "progress": 0,
+          "note": "",
+          "date": "2026-08-19"
+        }
+      ],
+      "createdAt": "2026-09-01",
+      "closedMonth": null
+    },
+    {
+      "id": "g3",
+      "title": "Academia",
+      "description": "Ir na academia no minimo 4x na semana",
+      "type": "shared",
+      "status": "in_progress",
+      "progress": 100,
+      "note": "Já começamos!",
+      "history": [
+        {
+          "month": "setembro",
+          "progress": 0,
+          "note": "Ainda escolhendo",
+          "date": "2026-09-01"
+        },
+        {
+          "month": "agosto",
+          "progress": 100,
+          "note": "",
+          "date": "2026-08-19"
+        }
+      ],
+      "createdAt": "2026-09-01",
+      "closedMonth": null
+    }
+  ],
+  "months": [
+    {
+      "id": "setembro-2026",
+      "month": "setembro",
+      "year": 2026,
+      "label": "Setembro",
+      "reflection1": "",
+      "reflection2": "",
+      "events": [],
+      "specialMoments": [],
+      "createdAt": "2026-09-01"
+    },
+    {
+      "id": "outubro-2026",
+      "month": "outubro",
+      "year": 2026,
+      "label": "Outubro",
+      "reflection1": "",
+      "reflection2": "",
+      "events": [],
+      "specialMoments": [],
+      "createdAt": "2026-09-01"
+    },
+    {
+      "id": "novembro-2026",
+      "month": "novembro",
+      "year": 2026,
+      "label": "Novembro",
+      "reflection1": "",
+      "reflection2": "",
+      "events": [],
+      "specialMoments": [],
+      "createdAt": "2026-09-01"
+    },
+    {
+      "id": "dezembro-2026",
+      "month": "dezembro",
+      "year": 2026,
+      "label": "Dezembro",
+      "reflection1": "",
+      "reflection2": "",
+      "events": [],
+      "specialMoments": [],
+      "createdAt": "2026-09-01"
+    }
+  ],
+  "discoveries": []
+}

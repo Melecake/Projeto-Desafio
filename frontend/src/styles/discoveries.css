@@ -1,0 +1,174 @@
+.discoveries-page { padding-bottom: 2rem; }
+
+.discovery-section {
+  margin-bottom: 1.75rem;
+  border-bottom: 1px solid var(--border-soft);
+  padding-bottom: 1.75rem;
+}
+
+.discovery-section:last-child { border-bottom: none; }
+
+.discovery-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  gap: 0.75rem;
+}
+
+.discovery-section-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+}
+
+.discovery-section-title {
+  font-family: 'Lora', serif;
+  font-size: 1.05rem;
+  color: var(--text);
+  font-style: italic;
+}
+
+.discovery-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.discovery-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  transition: box-shadow 0.2s;
+}
+
+.discovery-card:hover { box-shadow: var(--shadow); }
+
+.discovery-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.discovery-card-title {
+  font-family: 'Lora', serif;
+  font-size: 0.95rem;
+  color: var(--text);
+  flex: 1;
+  font-weight: 500;
+}
+
+.discovery-del {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 0.1rem;
+  opacity: 0.4;
+  transition: opacity 0.2s;
+  flex-shrink: 0;
+}
+
+.discovery-del:hover { opacity: 1; color: var(--terra); }
+
+.discovery-card-desc {
+  font-size: 0.8rem;
+  color: var(--text-soft);
+  font-style: italic;
+  line-height: 1.45;
+}
+
+.discovery-card-date {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+}
+
+.discovery-action-btn {
+  align-self: flex-start;
+  margin-top: 0.25rem;
+}
+
+.discovery-done-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+}
+
+.discovery-stars {
+  display: flex;
+  gap: 0.1rem;
+}
+
+.star-display {
+  font-size: 1rem;
+  color: var(--border);
+}
+
+.star-display.filled { color: var(--toffee); }
+
+.discovery-review {
+  font-size: 0.78rem;
+  color: var(--text-soft);
+  font-style: italic;
+  line-height: 1.45;
+}
+
+.discovery-done-section { margin-top: 0.5rem; }
+
+.discovery-done-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 0.6rem;
+}
+
+.discovery-empty {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-style: italic;
+  font-family: 'Lora', serif;
+  padding: 0.5rem 0;
+}
+
+.discovery-modal-name {
+  font-family: 'Lora', serif;
+  font-style: italic;
+  color: var(--text-soft);
+  font-size: 0.92rem;
+  margin-bottom: 1rem;
+  margin-top: -0.5rem;
+}
+
+.star-rating {
+  display: flex;
+  gap: 0.15rem;
+}
+
+.star-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--border);
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.15s;
+}
+
+.star-btn.filled { color: var(--toffee); }
+
+@media (max-width: 600px) {
+  .discovery-list { grid-template-columns: 1fr 1fr; }
+}

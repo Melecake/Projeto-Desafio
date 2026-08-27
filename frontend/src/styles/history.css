@@ -1,0 +1,184 @@
+.history-page { padding-bottom: 2rem; }
+
+.history-block { margin-bottom: 2.5rem; }
+
+.history-block-title {
+  font-family: 'Lora', serif;
+  font-size: 1rem;
+  color: var(--text-soft);
+  font-style: italic;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+/* Encerrados */
+.history-closed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.history-closed-card { transition: box-shadow 0.2s; }
+.history-closed-card:hover { box-shadow: var(--shadow); }
+
+.history-closed-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.3rem;
+}
+
+.history-closed-title {
+  font-family: 'Lora', serif;
+  font-size: 1rem;
+  color: var(--text);
+  flex: 1;
+  font-weight: 500;
+}
+
+.history-closed-desc {
+  font-size: 0.83rem;
+  color: var(--text-soft);
+  font-style: italic;
+  margin-bottom: 0.5rem;
+}
+
+.goal-owner-tag {
+  font-size: 0.72rem;
+  color: var(--copper);
+  font-style: italic;
+  white-space: nowrap;
+}
+
+.goal-closed-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.closed-label {
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 0.25rem 0.75rem;
+  border-radius: 99px;
+}
+
+.closed-label.achieved {
+  background: var(--shared-pale);
+  color: var(--shared);
+}
+
+.closed-label.not-achieved {
+  background: var(--terra-pale);
+  color: var(--terra);
+}
+
+.closed-month {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* Evolução */
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.history-goal { }
+
+.history-goal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.history-goal-title {
+  font-family: 'Lora', serif;
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.history-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding-left: 0.25rem;
+}
+
+.history-entry {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  position: relative;
+  padding-bottom: 1rem;
+}
+
+.history-entry-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--border);
+  border: 2px solid var(--border-soft);
+  flex-shrink: 0;
+  margin-top: 0.3rem;
+  position: relative;
+  z-index: 1;
+}
+
+.history-entry-line {
+  position: absolute;
+  left: 4px;
+  top: 16px;
+  bottom: 0;
+  width: 2px;
+  background: var(--border-soft);
+}
+
+.current-dot {
+  background: var(--toffee) !important;
+  border-color: var(--coffee) !important;
+}
+
+.history-entry-content { flex: 1; }
+
+.history-entry-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.2rem;
+}
+
+.history-entry-month {
+  font-family: 'Lora', serif;
+  font-size: 0.88rem;
+  color: var(--text);
+}
+
+.history-entry-progress {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.history-entry-note {
+  font-size: 0.8rem;
+  color: var(--text-soft);
+  font-style: italic;
+  margin-bottom: 0.3rem;
+}
+
+.history-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-soft);
+  font-family: 'Lora', serif;
+  font-style: italic;
+}
