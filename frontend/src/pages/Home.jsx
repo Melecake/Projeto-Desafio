@@ -3,6 +3,8 @@ import { useToast } from '../components/Toast'
 import ImageUpload from '../components/ImageUpload'
 import '../styles/home.css'
 
+// ─── Carrossel ───────────────────────────────────────────────────────────────
+
 function PhotoCarousel() {
   const [photos, setPhotos]       = useState([])
   const [current, setCurrent]     = useState(0)
@@ -78,58 +80,58 @@ function PhotoCarousel() {
   const nextIdx  = (current + 1) % total
   const showSide = total >= 3
 
+  if (managing) return (
+    <div className="carousel-manager">
+      <div className="carousel-manager-header">
+        <h3 className="carousel-manager-title">Gerenciar fotos</h3>
+        <button className="btn btn-ghost btn-sm" onClick={() => setManaging(false)}>Fechar</button>
+      </div>
+      <div className="carousel-manager-grid">
+        {photos.map(p => (
+          <div key={p.id} className="carousel-manager-item">
+            <img src={p.url} alt="" />
+            <button className="carousel-manager-del" onClick={() => handleDelete(p.id)}>×</button>
+          </div>
+        ))}
+      </div>
+      <ImageUpload bucket="photos" label="Adicionar foto" onUpload={handleUpload} />
+    </div>
+  )
+
   return (
     <div className="carousel">
-      {!managing ? (
-        <>
-          <div className={`carousel-stage ${animating ? 'animating' : ''}`}>
-            {showSide && (
-              <div className="carousel-side" onClick={() => go(prevIdx)}>
-                <img src={photos[prevIdx].url} alt="" className="carousel-side-img" />
-                <div className="carousel-side-overlay" />
-              </div>
-            )}
-            <div className="carousel-main">
-              <img src={photos[current].url} alt="" className="carousel-main-img" />
-              <button className="carousel-btn prev" onClick={() => go(prevIdx)}>‹</button>
-              <button className="carousel-btn next" onClick={() => go(nextIdx)}>›</button>
-            </div>
-            {showSide && (
-              <div className="carousel-side" onClick={() => go(nextIdx)}>
-                <img src={photos[nextIdx].url} alt="" className="carousel-side-img" />
-                <div className="carousel-side-overlay" />
-              </div>
-            )}
+      <div className={`carousel-stage ${animating ? 'animating' : ''}`}>
+        {showSide && (
+          <div className="carousel-side" onClick={() => go(prevIdx)}>
+            <img src={photos[prevIdx].url} alt="" className="carousel-side-img" />
+            <div className="carousel-side-overlay" />
           </div>
-          <div className="carousel-footer">
-            <div className="carousel-dots">
-              {photos.map((_, i) => (
-                <button key={i} className={`carousel-dot ${i === current ? 'active' : ''}`} onClick={() => go(i)} />
-              ))}
-            </div>
-            <button className="carousel-manage-btn" onClick={() => setManaging(true)}>Gerenciar fotos</button>
-          </div>
-        </>
-      ) : (
-        <div className="carousel-manager">
-          <div className="carousel-manager-header">
-            <h3 className="carousel-manager-title">Gerenciar fotos</h3>
-            <button className="btn btn-ghost btn-sm" onClick={() => setManaging(false)}>Fechar</button>
-          </div>
-          <div className="carousel-manager-grid">
-            {photos.map(p => (
-              <div key={p.id} className="carousel-manager-item">
-                <img src={p.url} alt="" />
-                <button className="carousel-manager-del" onClick={() => handleDelete(p.id)}>×</button>
-              </div>
-            ))}
-          </div>
-          <ImageUpload bucket="photos" label="Adicionar foto" onUpload={handleUpload} />
+        )}
+        <div className="carousel-main">
+          <img src={photos[current].url} alt="" className="carousel-main-img" />
+          <button className="carousel-btn prev" onClick={() => go(prevIdx)}>‹</button>
+          <button className="carousel-btn next" onClick={() => go(nextIdx)}>›</button>
         </div>
-      )}
+        {showSide && (
+          <div className="carousel-side" onClick={() => go(nextIdx)}>
+            <img src={photos[nextIdx].url} alt="" className="carousel-side-img" />
+            <div className="carousel-side-overlay" />
+          </div>
+        )}
+      </div>
+      <div className="carousel-footer">
+        <div className="carousel-dots">
+          {photos.map((_, i) => (
+            <button key={i} className={`carousel-dot ${i === current ? 'active' : ''}`} onClick={() => go(i)} />
+          ))}
+        </div>
+        <button className="carousel-manage-btn" onClick={() => setManaging(true)}>Gerenciar fotos</button>
+      </div>
     </div>
   )
 }
+
+// ─── Calendário ──────────────────────────────────────────────────────────────
 
 function MiniCalendar({ settings }) {
   const [events, setEvents]   = useState([])
@@ -194,9 +196,6 @@ function MiniCalendar({ settings }) {
 
   function colorVar(c) { return COLORS.find(x => x.value === c)?.color || 'var(--toffee)' }
 
-  function prevMonth() { setCurrent(d => new Date(d.getFullYear(), d.getMonth() - 1, 1)) }
-  function nextMonth() { setCurrent(d => new Date(d.getFullYear(), d.getMonth() + 1, 1)) }
-
   const upcomingEvents = events
     .filter(e => new Date(e.date + 'T12:00:00') >= today)
     .sort((a, b) => a.date.localeCompare(b.date))
@@ -207,18 +206,18 @@ function MiniCalendar({ settings }) {
       <h2 className="home-card-title">Calendário</h2>
 
       <div className="cal-nav">
-        <button className="cal-nav-btn" onClick={prevMonth}>‹</button>
+        <button className="cal-nav-btn" onClick={() => setCurrent(d => new Date(d.getFullYear(), d.getMonth() - 1, 1))}>‹</button>
         <span className="cal-month-label">{monthNames[month]} {year}</span>
-        <button className="cal-nav-btn" onClick={nextMonth}>›</button>
+        <button className="cal-nav-btn" onClick={() => setCurrent(d => new Date(d.getFullYear(), d.getMonth() + 1, 1))}>›</button>
       </div>
 
       <div className="cal-grid">
         {dayNames.map((d, i) => <div key={i} className="cal-dayname">{d}</div>)}
         {cells.map((day, i) => {
           if (!day) return <div key={i} />
-          const dateStr  = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`
-          const dayEvts  = monthEvents.filter(e => e.date === dateStr)
-          const isToday  = today.getDate() === day && today.getMonth() === month && today.getFullYear() === year
+          const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+          const dayEvts = monthEvents.filter(e => e.date === dateStr)
+          const isToday = today.getDate() === day && today.getMonth() === month && today.getFullYear() === year
           return (
             <div key={i} className={`cal-day ${isToday ? 'today' : ''} ${dayEvts.length ? 'has-events' : ''}`}>
               <span className="cal-day-num">{day}</span>
@@ -247,9 +246,18 @@ function MiniCalendar({ settings }) {
 
       {adding ? (
         <div className="cal-add-form">
-          <input type="text" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-            placeholder="Nome do evento..." autoFocus />
-          <input type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} />
+          <input
+            type="text"
+            value={form.title}
+            onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+            placeholder="Nome do evento..."
+            autoFocus
+          />
+          <input
+            type="date"
+            value={form.date}
+            onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
+          />
           <div className="cal-add-row">
             <select value={form.author} onChange={e => setForm(f => ({ ...f, author: e.target.value }))}>
               <option value={settings.person1}>{settings.person1}</option>
@@ -272,6 +280,77 @@ function MiniCalendar({ settings }) {
   )
 }
 
+// ─── Mural de recados ─────────────────────────────────────────────────────────
+
+function QuickNotes({ notes, settings, reload }) {
+  const [text, setText]     = useState('')
+  const [author, setAuthor] = useState(settings.person1)
+  const toast = useToast()
+
+  async function addNote() {
+    if (!text.trim()) return
+    await fetch('/api/notes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, author })
+    })
+    setText('')
+    toast('Recado deixado')
+    reload()
+  }
+
+  async function deleteNote(id) {
+    await fetch(`/api/notes/${id}`, { method: 'DELETE' })
+    toast('Recado removido', 'error')
+    reload()
+  }
+
+  return (
+    <div className="quick-notes card">
+      <h2 className="home-card-title">Mural de recados</h2>
+
+      <div className="notes-list">
+        {notes.length === 0 && (
+          <p className="notes-empty">Nenhum recado ainda. Deixe um para o outro.</p>
+        )}
+        {notes.slice(0, 5).map(n => (
+          <div key={n.id} className="note-item">
+            <div className="note-header">
+              <span className="note-author">{n.author}</span>
+              <span className="note-date">{n.created_at}</span>
+              <button className="note-del" onClick={() => deleteNote(n.id)}>×</button>
+            </div>
+            <p className="note-text">{n.text}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="notes-form">
+        <select
+          className="filter-select"
+          value={author}
+          onChange={e => setAuthor(e.target.value)}
+          style={{ width: 'auto', minWidth: '110px' }}
+        >
+          <option value={settings.person1}>{settings.person1}</option>
+          <option value={settings.person2}>{settings.person2}</option>
+        </select>
+        <input
+          type="text"
+          value={text}
+          onChange={e => setText(e.target.value)}
+          placeholder="Deixar um recado..."
+          onKeyDown={e => e.key === 'Enter' && addNote()}
+          style={{ flex: 1 }}
+        />
+        <button className="btn btn-primary btn-sm" onClick={addNote}>Enviar</button>
+      </div>
+    </div>
+  )
+}
+
+// ─── Home ─────────────────────────────────────────────────────────────────────
+
 export default function Home({ data, reload }) {
   const { goals, months, settings, notes = [], discoveries = [] } = data
 
@@ -292,16 +371,16 @@ export default function Home({ data, reload }) {
     (b.created_at || '').localeCompare(a.created_at || '')
   )[0]
 
-  const now          = new Date()
-  const daysInMonth  = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
-  const daysLeft     = daysInMonth - now.getDate()
-  const monthEndSoon = daysLeft <= 7
-
+  const now              = new Date()
+  const daysInMonth      = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+  const daysLeft         = daysInMonth - now.getDate()
+  const monthEndSoon     = daysLeft <= 7
   const monthNames       = ['janeiro','fevereiro','março','abril','maio','junho',
                              'julho','agosto','setembro','outubro','novembro','dezembro']
   const currentMonth     = monthNames[now.getMonth()]
   const currentMonthData = months.find(m => m.month === currentMonth)
-  const currentMonthEmpty = currentMonthData && !currentMonthData.reflection1 && !currentMonthData.reflection2
+  const currentMonthEmpty = currentMonthData &&
+    !currentMonthData.reflection1 && !currentMonthData.reflection2
 
   const recentMonths = [...months]
     .filter(m => m.reflection1 || m.reflection2 || m.events.length || m.specialMoments.length)
@@ -316,14 +395,18 @@ export default function Home({ data, reload }) {
 
   return (
     <div className="home">
+
+      {/* Hero */}
       <div className="home-hero">
         <div className="home-decoration">✦ · ✦ · ✦</div>
         <h1 className="home-title">Momorecos Challenge</h1>
         <p className="home-subtitle">Apenas dois namos se motivando a cada dia, lesgooo!!!</p>
       </div>
 
+      {/* Carrossel */}
       <PhotoCarousel />
 
+      {/* Aviso fim de mês */}
       {monthEndSoon && currentMonthEmpty && (
         <div className="month-end-banner">
           <span className="month-end-icon">◷</span>
@@ -334,18 +417,25 @@ export default function Home({ data, reload }) {
         </div>
       )}
 
+      {/* Grid principal */}
       <div className="home-grid">
+
+        {/* Coluna esquerda */}
         <div className="home-col-left">
 
+          {/* Como estamos */}
           <div className="home-stats card">
             <h2 className="home-card-title">Como estamos</h2>
             <div className="stats-single">
               <span className="stat-number-big">{done.length}</span>
-              <span className="stat-label-big">{done.length === 1 ? 'objetivo concluído' : 'objetivos concluídos'}</span>
+              <span className="stat-label-big">
+                {done.length === 1 ? 'objetivo concluído' : 'objetivos concluídos'}
+              </span>
             </div>
             <p className="stats-sub">de {goals.length} no total</p>
           </div>
 
+          {/* Conquistas */}
           {conquistas.length > 0 && (
             <div className="home-conquistas card">
               <h2 className="home-card-title">Descobertas concluídas</h2>
@@ -360,6 +450,7 @@ export default function Home({ data, reload }) {
             </div>
           )}
 
+          {/* Última descoberta */}
           {lastDiscovery && (
             <div className="home-last-discovery card">
               <h2 className="home-card-title">Última descoberta</h2>
@@ -380,17 +471,22 @@ export default function Home({ data, reload }) {
             </div>
           )}
 
+          {/* Objetivos individuais */}
           <div className="home-individual card">
             <h2 className="home-card-title">Objetivos individuais</h2>
             <div className="individual-row">
               <div className="individual-person">
                 <span className="individual-name">{settings.person1}</span>
                 <ul className="individual-list">
-                  {person1.filter(g => g.status !== 'done' && g.status !== 'not_achieved').map(g => (
-                    <li key={g.id} className="individual-list-item">
-                      {g.favorited && <span className="fav-star">★ </span>}{g.title}
-                    </li>
-                  ))}
+                  {person1
+                    .filter(g => g.status !== 'done' && g.status !== 'not_achieved')
+                    .map(g => (
+                      <li key={g.id} className="individual-list-item">
+                        {g.favorited && <span className="fav-star">★ </span>}
+                        {g.title}
+                      </li>
+                    ))
+                  }
                   {person1.filter(g => g.status !== 'done' && g.status !== 'not_achieved').length === 0 && (
                     <li className="individual-empty">Nenhum ainda</li>
                   )}
@@ -400,11 +496,15 @@ export default function Home({ data, reload }) {
               <div className="individual-person">
                 <span className="individual-name">{settings.person2}</span>
                 <ul className="individual-list">
-                  {person2.filter(g => g.status !== 'done' && g.status !== 'not_achieved').map(g => (
-                    <li key={g.id} className="individual-list-item">
-                      {g.favorited && <span className="fav-star">★ </span>}{g.title}
-                    </li>
-                  ))}
+                  {person2
+                    .filter(g => g.status !== 'done' && g.status !== 'not_achieved')
+                    .map(g => (
+                      <li key={g.id} className="individual-list-item">
+                        {g.favorited && <span className="fav-star">★ </span>}
+                        {g.title}
+                      </li>
+                    ))
+                  }
                   {person2.filter(g => g.status !== 'done' && g.status !== 'not_achieved').length === 0 && (
                     <li className="individual-empty">Nenhum ainda</li>
                   )}
@@ -415,10 +515,13 @@ export default function Home({ data, reload }) {
 
         </div>
 
+        {/* Coluna direita */}
         <div className="home-col-right">
 
+          {/* Calendário */}
           <MiniCalendar settings={settings} />
 
+          {/* Timeline */}
           <div className="home-timeline card">
             <h2 className="home-card-title">Nossa jornada</h2>
             <div className="timeline">
@@ -451,26 +554,32 @@ export default function Home({ data, reload }) {
             </div>
           </div>
 
+          {/* Nossos objetivos */}
           <div className="home-shared card">
             <h2 className="home-card-title">Nossos objetivos</h2>
             {shared.filter(g => g.status !== 'done' && g.status !== 'not_achieved').length === 0
               ? <p className="home-empty-text">Nenhum objetivo compartilhado ativo.</p>
-              : shared.filter(g => g.status !== 'done' && g.status !== 'not_achieved').map(g => (
-                <div key={g.id} className="shared-goal-item">
-                  <span className="shared-goal-title">
-                    {g.favorited && <span className="fav-star">★ </span>}{g.title}
-                  </span>
-                  {g.description && <p className="shared-goal-note">{g.description}</p>}
-                </div>
-              ))
+              : shared
+                  .filter(g => g.status !== 'done' && g.status !== 'not_achieved')
+                  .map(g => (
+                    <div key={g.id} className="shared-goal-item">
+                      <span className="shared-goal-title">
+                        {g.favorited && <span className="fav-star">★ </span>}
+                        {g.title}
+                      </span>
+                      {g.description && <p className="shared-goal-note">{g.description}</p>}
+                    </div>
+                  ))
             }
           </div>
 
+          {/* Mural de recados */}
           <QuickNotes notes={notes} settings={settings} reload={reload} />
 
         </div>
       </div>
 
+      {/* Últimos registros */}
       {recentMonths.length > 0 && (
         <>
           <hr className="divider" />
@@ -481,19 +590,31 @@ export default function Home({ data, reload }) {
                 <div key={m.id} className="recent-month card">
                   <span className="recent-month-label">{m.label}</span>
                   <div className="recent-month-meta">
-                    {m.events.length > 0 && <span className="recent-meta-tag">{m.events.length} acontecimento{m.events.length > 1 ? 's' : ''}</span>}
-                    {m.specialMoments.length > 0 && <span className="recent-meta-tag">{m.specialMoments.length} momento{m.specialMoments.length > 1 ? 's' : ''} especial{m.specialMoments.length > 1 ? 'is' : ''}</span>}
+                    {m.events.length > 0 && (
+                      <span className="recent-meta-tag">
+                        {m.events.length} acontecimento{m.events.length > 1 ? 's' : ''}
+                      </span>
+                    )}
+                    {m.specialMoments.length > 0 && (
+                      <span className="recent-meta-tag">
+                        {m.specialMoments.length} momento{m.specialMoments.length > 1 ? 's' : ''} especial{m.specialMoments.length > 1 ? 'is' : ''}
+                      </span>
+                    )}
                   </div>
                   {m.reflection1 && (
                     <div className="recent-reflection">
                       <span className="recent-person">{settings.person1}</span>
-                      <p className="recent-text">{m.reflection1.slice(0, 180)}{m.reflection1.length > 180 ? '…' : ''}</p>
+                      <p className="recent-text">
+                        {m.reflection1.slice(0, 180)}{m.reflection1.length > 180 ? '…' : ''}
+                      </p>
                     </div>
                   )}
                   {m.reflection2 && (
                     <div className="recent-reflection">
                       <span className="recent-person">{settings.person2}</span>
-                      <p className="recent-text">{m.reflection2.slice(0, 180)}{m.reflection2.length > 180 ? '…' : ''}</p>
+                      <p className="recent-text">
+                        {m.reflection2.slice(0, 180)}{m.reflection2.length > 180 ? '…' : ''}
+                      </p>
                     </div>
                   )}
                   {m.specialMoments.length > 0 && (
@@ -509,6 +630,7 @@ export default function Home({ data, reload }) {
           </div>
         </>
       )}
+
     </div>
   )
 }
