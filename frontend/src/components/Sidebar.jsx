@@ -4,6 +4,7 @@ export default function Sidebar({ page, setPage }) {
     { id: 'goals',       label: 'Objetivos'    },
     { id: 'months',      label: 'Nossos Meses' },
     { id: 'discoveries', label: 'Descobertas'  },
+    { id: 'journal',     label: 'Anotações'    },
     { id: 'history',     label: 'Histórico'    },
   ]
 

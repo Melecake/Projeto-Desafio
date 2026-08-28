@@ -4,6 +4,7 @@ import Home from './pages/Home'
 import Goals from './pages/Goals'
 import Months from './pages/Months'
 import Discoveries from './pages/Discoveries'
+import Journal from './pages/Journal'
 import History from './pages/History'
 import { SkeletonPage } from './components/Skeleton'
 
@@ -58,6 +59,7 @@ export default function App() {
           {page === 'goals'       && <Goals       data={data} reload={loadData} />}
           {page === 'months'      && <Months      data={data} reload={loadData} />}
           {page === 'discoveries' && <Discoveries data={data} reload={loadData} />}
+          {page === 'journal'     && <Journal     data={data} />}
           {page === 'history'     && <History     data={data} reload={loadData} />}
         </main>
       </div>

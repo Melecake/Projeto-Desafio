@@ -111,24 +111,37 @@ function ItemFormModal({ category, item, onClose, onSave }) {
   return (
     <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal">
-        <h2 className="modal-title">{isEdit ? 'Editar' : `Adicionar`}</h2>
+        <h2 className="modal-title">{isEdit ? 'Editar' : 'Adicionar'}</h2>
 
         <div className="form-group">
           <label>Nome</label>
-          <input type="text" value={form.title} onChange={e => set('title', e.target.value)} placeholder="Nome..." autoFocus />
+          <input
+            type="text"
+            value={form.title}
+            onChange={e => set('title', e.target.value)}
+            placeholder="Nome..."
+            autoFocus
+          />
         </div>
 
         <div className="form-group">
           <label>Descrição</label>
-          <textarea value={form.description} onChange={e => set('description', e.target.value)} placeholder="Uma frase sobre esse item..." rows={2} />
+          <textarea
+            value={form.description}
+            onChange={e => set('description', e.target.value)}
+            placeholder="Uma frase sobre esse item..."
+            rows={2}
+          />
         </div>
 
-        <div className="form-group">
-          <label>Categoria</label>
-          <select value={form.category} onChange={e => set('category', e.target.value)}>
-            {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
-          </select>
-        </div>
+        {isEdit && (
+          <div className="form-group">
+            <label>Categoria</label>
+            <select value={form.category} onChange={e => set('category', e.target.value)}>
+              {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+            </select>
+          </div>
+        )}
 
         <div className="form-group">
           <label>Tags</label>
@@ -141,9 +154,13 @@ function ItemFormModal({ category, item, onClose, onSave }) {
             ))}
           </div>
           <div className="tag-input-row">
-            <input type="text" value={tagInput} onChange={e => setTagInput(e.target.value)}
+            <input
+              type="text"
+              value={tagInput}
+              onChange={e => setTagInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addTag())}
-              placeholder="Adicionar tag..." />
+              placeholder="Adicionar tag..."
+            />
             <button className="btn btn-ghost btn-sm" onClick={addTag}>+</button>
           </div>
         </div>
