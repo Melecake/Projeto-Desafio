@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,DELETE,OPTIONS')
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
   if (req.method === 'OPTIONS') return res.status(200).end()
 
@@ -12,33 +12,29 @@ export default async function handler(req, res) {
 
     if (req.method === 'GET') {
       const { data, error } = await supabase
-        .from('photos')
+        .from('calendar_events')
         .select('*')
-        .order('created_at', { ascending: true })
+        .order('date', { ascending: true })
       if (error) return res.status(500).json({ error: error.message })
-      return res.json((data || []).map(p => ({ id: p.id, url: p.url })))
+      return res.json(data || [])
     }
 
     if (req.method === 'POST') {
-      const { url, name } = req.body
-      if (!url) return res.status(400).json({ error: 'URL obrigatória' })
-      const item = {
-        id:         'p' + Date.now(),
-        url,
-        name:       name || '',
-        created_at: new Date().toISOString().split('T')[0]
+      const event = {
+        id:         'c' + Date.now(),
+        title:      req.body.title  || '',
+        date:       req.body.date   || '',
+        color:      req.body.color  || 'default',
+        author:     req.body.author || '',
+        created_at: new Date().toISOString().split('T')[0],
       }
-      const { data, error } = await supabase.from('photos').insert(item).select().single()
+      const { data, error } = await supabase.from('calendar_events').insert(event).select().single()
       if (error) return res.status(500).json({ error: error.message })
       return res.json(data)
     }
 
     if (req.method === 'DELETE' && id) {
-      const { data: photo } = await supabase.from('photos').select('name').eq('id', id).single()
-      if (photo?.name) {
-        await supabase.storage.from('photos').remove([photo.name])
-      }
-      await supabase.from('photos').delete().eq('id', id)
+      await supabase.from('calendar_events').delete().eq('id', id)
       return res.json({ ok: true })
     }
 

@@ -1,0 +1,37 @@
+.image-upload {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.image-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 20px;
+  border: 1px dashed var(--border);
+  background: none;
+  font-size: 0.82rem;
+  font-family: 'Inter', sans-serif;
+  color: var(--text-soft);
+  cursor: pointer;
+  transition: all 0.2s;
+  width: fit-content;
+}
+
+.image-upload-btn:hover:not(:disabled) {
+  border-color: var(--toffee);
+  color: var(--toffee);
+  background: var(--accent-pale);
+}
+
+.image-upload-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.image-upload-preview {
+  width: 100%;
+  max-height: 160px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-soft);
+}

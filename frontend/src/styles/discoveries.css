@@ -206,3 +206,53 @@
   font-style: italic;
   margin-left: 0.5rem;
 }
+
+/* TMDB search */
+.tmdb-search { display: flex; flex-direction: column; gap: 0.5rem; }
+
+.tmdb-search-row { display: flex; gap: 0.4rem; }
+.tmdb-search-row input { flex: 1; }
+
+.tmdb-results {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.tmdb-result {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.5rem 0.75rem;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border-soft);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.tmdb-result:last-child { border-bottom: none; }
+.tmdb-result:hover { background: var(--accent-pale); }
+
+.tmdb-poster {
+  width: 32px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.tmdb-info { display: flex; flex-direction: column; gap: 0.15rem; flex: 1; }
+
+.tmdb-title { font-size: 0.85rem; color: var(--text); font-family: 'Lora', serif; }
+
+.tmdb-year  { font-size: 0.72rem; color: var(--text-muted); }
+
+.tmdb-rating { font-size: 0.72rem; color: var(--toffee); }

@@ -14,6 +14,7 @@
     { "source": "/api/photos/:id",                "destination": "/api/photos?id=:id" },
     { "source": "/api/notes/:id",                 "destination": "/api/notes?id=:id" },
     { "source": "/api/journal/:id",               "destination": "/api/journal?id=:id" },
+    { "source": "/api/calendar/:id",              "destination": "/api/calendar?id=:id" },
     { "source": "/api/(.*)",                      "destination": "/api/$1" },
     { "source": "/(.*)",                          "destination": "/index.html" }
   ]

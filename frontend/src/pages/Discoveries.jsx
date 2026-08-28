@@ -84,22 +84,77 @@ function ReviewModal({ item, onClose, onSave }) {
   )
 }
 
+function TmdbSearch({ category, onSelect }) {
+  const [query, setQuery]     = useState('')
+  const [results, setResults] = useState([])
+  const [loading, setLoading] = useState(false)
+
+  async function search() {
+    if (!query.trim()) return
+    setLoading(true)
+    const type = category === 'series' ? 'series' : 'movie'
+    const res  = await fetch(`/api/tmdb?query=${encodeURIComponent(query)}&type=${type}`)
+    const data = await res.json()
+    setResults(data || [])
+    setLoading(false)
+  }
+
+  return (
+    <div className="tmdb-search">
+      <div className="tmdb-search-row">
+        <input
+          type="text"
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && search()}
+          placeholder={`Buscar ${category === 'series' ? 'série' : 'filme'} no TMDB...`}
+        />
+        <button className="btn btn-ghost btn-sm" onClick={search} disabled={loading}>
+          {loading ? '...' : 'Buscar'}
+        </button>
+      </div>
+      {results.length > 0 && (
+        <div className="tmdb-results">
+          {results.map(r => (
+            <button key={r.id} className="tmdb-result" onClick={() => { onSelect(r); setResults([]) }}>
+              {r.poster && <img src={r.poster} alt="" className="tmdb-poster" />}
+              <div className="tmdb-info">
+                <span className="tmdb-title">{r.title}</span>
+                {r.year && <span className="tmdb-year">{r.year}</span>}
+                {r.rating && <span className="tmdb-rating">★ {r.rating}</span>}
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function ItemFormModal({ category, item, onClose, onSave }) {
   const isEdit = !!item
+  const showTmdb = !isEdit && (category === 'filmes' || category === 'series')
+
   const [form, setForm] = useState({
     title:       item?.title       || '',
     description: item?.description || '',
     tags:        item?.tags        || [],
     category:    item?.category    || category,
   })
-  function set(key, val) { setForm(f => ({ ...f, [key]: val })) }
   const [tagInput, setTagInput] = useState('')
+
+  function set(key, val) { setForm(f => ({ ...f, [key]: val })) }
 
   function addTag() {
     const t = tagInput.trim().toLowerCase()
     if (!t || form.tags.includes(t)) return
     set('tags', [...form.tags, t])
     setTagInput('')
+  }
+
+  function handleTmdbSelect(result) {
+    set('title', result.title)
+    set('description', result.overview?.slice(0, 200) || '')
   }
 
   async function save() {
@@ -113,25 +168,23 @@ function ItemFormModal({ category, item, onClose, onSave }) {
       <div className="modal">
         <h2 className="modal-title">{isEdit ? 'Editar' : 'Adicionar'}</h2>
 
+        {showTmdb && (
+          <div className="form-group">
+            <label>Buscar automaticamente</label>
+            <TmdbSearch category={category} onSelect={handleTmdbSelect} />
+          </div>
+        )}
+
         <div className="form-group">
           <label>Nome</label>
-          <input
-            type="text"
-            value={form.title}
-            onChange={e => set('title', e.target.value)}
-            placeholder="Nome..."
-            autoFocus
-          />
+          <input type="text" value={form.title} onChange={e => set('title', e.target.value)}
+            placeholder="Nome..." autoFocus={!showTmdb} />
         </div>
 
         <div className="form-group">
           <label>Descrição</label>
-          <textarea
-            value={form.description}
-            onChange={e => set('description', e.target.value)}
-            placeholder="Uma frase sobre esse item..."
-            rows={2}
-          />
+          <textarea value={form.description} onChange={e => set('description', e.target.value)}
+            placeholder="Uma frase sobre esse item..." rows={2} />
         </div>
 
         {isEdit && (
@@ -154,13 +207,9 @@ function ItemFormModal({ category, item, onClose, onSave }) {
             ))}
           </div>
           <div className="tag-input-row">
-            <input
-              type="text"
-              value={tagInput}
-              onChange={e => setTagInput(e.target.value)}
+            <input type="text" value={tagInput} onChange={e => setTagInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addTag())}
-              placeholder="Adicionar tag..."
-            />
+              placeholder="Adicionar tag..." />
             <button className="btn btn-ghost btn-sm" onClick={addTag}>+</button>
           </div>
         </div>

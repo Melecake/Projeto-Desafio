@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useToast } from '../components/Toast'
+import ImageUpload from '../components/ImageUpload'
 import '../styles/journal.css'
 
 function formatDate(str) {
@@ -12,12 +13,23 @@ function formatDate(str) {
 function EntryModal({ entry, settings, onClose, onSave }) {
   const isNew = !entry
   const [form, setForm] = useState({
-    title:  entry?.title  || '',
-    body:   entry?.body   || '',
-    author: entry?.author || settings.person1,
+    title:     entry?.title     || '',
+    body:      entry?.body      || '',
+    author:    entry?.author    || settings.person1,
+    image_url: entry?.image_url || '',
+    links:     entry?.links     || [],
   })
+  const [newLink, setNewLink] = useState({ label: '', url: '' })
 
   function set(key, val) { setForm(f => ({ ...f, [key]: val })) }
+
+  function addLink() {
+    if (!newLink.url.trim()) return
+    set('links', [...form.links, { id: 'l' + Date.now(), ...newLink }])
+    setNewLink({ label: '', url: '' })
+  }
+
+  function removeLink(id) { set('links', form.links.filter(l => l.id !== id)) }
 
   async function save() {
     if (!form.title.trim() || !form.body.trim()) return
@@ -32,13 +44,8 @@ function EntryModal({ entry, settings, onClose, onSave }) {
 
         <div className="form-group">
           <label>Título</label>
-          <input
-            type="text"
-            value={form.title}
-            onChange={e => set('title', e.target.value)}
-            placeholder="Do que se trata essa anotação?"
-            autoFocus
-          />
+          <input type="text" value={form.title} onChange={e => set('title', e.target.value)}
+            placeholder="Do que se trata essa anotação?" autoFocus />
         </div>
 
         <div className="form-group">
@@ -52,13 +59,45 @@ function EntryModal({ entry, settings, onClose, onSave }) {
 
         <div className="form-group">
           <label>Anotação</label>
-          <textarea
-            value={form.body}
-            onChange={e => set('body', e.target.value)}
+          <textarea value={form.body} onChange={e => set('body', e.target.value)}
             placeholder="Escreva aqui sua ideia, plano, pensamento..."
-            rows={12}
-            className="journal-textarea"
-          />
+            rows={10} className="journal-textarea" />
+        </div>
+
+        <div className="form-group">
+          <label>Imagem</label>
+          {form.image_url && (
+            <div className="journal-img-preview-wrap">
+              <img src={form.image_url} alt="" className="journal-img-preview" />
+              <button className="journal-img-remove" onClick={() => set('image_url', '')}>Remover imagem</button>
+            </div>
+          )}
+          {!form.image_url && (
+            <ImageUpload
+              bucket="photos"
+              label="Adicionar imagem"
+              onUpload={(url) => set('image_url', url)}
+            />
+          )}
+        </div>
+
+        <div className="form-group">
+          <label>Links</label>
+          <div className="journal-links-list">
+            {form.links.map(l => (
+              <div key={l.id} className="journal-link-item">
+                <span className="journal-link-label">{l.label || l.url}</span>
+                <button className="tag-remove" onClick={() => removeLink(l.id)}>×</button>
+              </div>
+            ))}
+          </div>
+          <div className="journal-link-add">
+            <input type="text" value={newLink.label} onChange={e => setNewLink(n => ({ ...n, label: e.target.value }))}
+              placeholder="Nome do link (opcional)" />
+            <input type="text" value={newLink.url} onChange={e => setNewLink(n => ({ ...n, url: e.target.value }))}
+              placeholder="https://..." onKeyDown={e => e.key === 'Enter' && addLink()} />
+            <button className="btn btn-ghost btn-sm" onClick={addLink}>+</button>
+          </div>
         </div>
 
         <div className="modal-actions">
@@ -92,8 +131,25 @@ function EntryView({ entry, onClose, onEdit, onDelete }) {
           <button className="reading-close" onClick={onClose}>×</button>
         </div>
 
+        {entry.image_url && (
+          <div className="journal-view-image">
+            <img src={entry.image_url} alt="" />
+          </div>
+        )}
+
         <div className="journal-view-body">
           <p className="journal-view-text">{entry.body}</p>
+
+          {entry.links && entry.links.length > 0 && (
+            <div className="journal-view-links">
+              <p className="journal-view-links-label">Links</p>
+              {entry.links.map(l => (
+                <a key={l.id} href={l.url} target="_blank" rel="noopener noreferrer" className="journal-view-link">
+                  {l.label || l.url}
+                </a>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="journal-view-actions">
@@ -119,7 +175,7 @@ export default function Journal({ data }) {
 
   async function loadEntries() {
     setLoading(true)
-    const res = await fetch('/api/journal')
+    const res  = await fetch('/api/journal')
     const data = await res.json()
     setEntries(data)
     setLoading(false)
@@ -170,35 +226,18 @@ export default function Journal({ data }) {
 
   return (
     <div className="journal-page">
-
       {newModal && (
-        <EntryModal
-          settings={settings}
-          onClose={() => setNewModal(false)}
-          onSave={saveEntry}
-        />
+        <EntryModal settings={settings} onClose={() => setNewModal(false)} onSave={saveEntry} />
       )}
-
       {editEntry && (
-        <EntryModal
-          entry={editEntry}
-          settings={settings}
+        <EntryModal entry={editEntry} settings={settings}
           onClose={() => setEditEntry(null)}
-          onSave={async (form, id) => {
-            await saveEntry(form, id)
-            setEditEntry(null)
-            setViewEntry(null)
-          }}
-        />
+          onSave={async (form, id) => { await saveEntry(form, id); setEditEntry(null); setViewEntry(null) }} />
       )}
-
       {viewEntry && !editEntry && (
-        <EntryView
-          entry={viewEntry}
-          onClose={() => setViewEntry(null)}
+        <EntryView entry={viewEntry} onClose={() => setViewEntry(null)}
           onEdit={() => setEditEntry(viewEntry)}
-          onDelete={() => deleteEntry(viewEntry.id)}
-        />
+          onDelete={() => deleteEntry(viewEntry.id)} />
       )}
 
       <div className="section-header">
@@ -211,47 +250,34 @@ export default function Journal({ data }) {
 
       <div className="journal-controls">
         <div className="goals-search" style={{ flex: 1, maxWidth: '360px' }}>
-          <input
-            type="text"
-            className="search-input"
-            placeholder="Buscar anotação..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
+          <input type="text" className="search-input" placeholder="Buscar anotação..."
+            value={search} onChange={e => setSearch(e.target.value)} />
           {search && <button className="search-clear" onClick={() => setSearch('')}>×</button>}
         </div>
-        <select
-          className="filter-select"
-          value={authorFilter}
-          onChange={e => setAuthorFilter(e.target.value)}
-        >
+        <select className="filter-select" value={authorFilter} onChange={e => setAuthorFilter(e.target.value)}>
           {authorOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
       </div>
 
-      {loading && (
-        <div className="journal-loading">Carregando anotações...</div>
-      )}
+      {loading && <div className="journal-loading">Carregando anotações...</div>}
 
       {!loading && filtered.length === 0 && (
         <div className="journal-empty">
           <p className="goals-empty-icon">·  ·  ·</p>
           <p className="goals-empty-text">
-            {entries.length === 0
-              ? 'Nenhuma anotação ainda. Escreva a primeira ideia.'
-              : 'Nenhuma anotação encontrada para esse filtro.'
-            }
+            {entries.length === 0 ? 'Nenhuma anotação ainda. Escreva a primeira ideia.' : 'Nenhuma anotação encontrada.'}
           </p>
         </div>
       )}
 
       <div className="journal-grid">
         {filtered.map(entry => (
-          <button
-            key={entry.id}
-            className="journal-card card"
-            onClick={() => setViewEntry(entry)}
-          >
+          <button key={entry.id} className="journal-card card" onClick={() => setViewEntry(entry)}>
+            {entry.image_url && (
+              <div className="journal-card-img">
+                <img src={entry.image_url} alt="" />
+              </div>
+            )}
             <div className="journal-card-header">
               <span className="journal-card-author">{entry.author}</span>
               <span className="journal-card-date">{formatDate(entry.created_at)}</span>
@@ -260,10 +286,12 @@ export default function Journal({ data }) {
             <p className="journal-card-preview">
               {entry.body.slice(0, 140)}{entry.body.length > 140 ? '…' : ''}
             </p>
+            {entry.links && entry.links.length > 0 && (
+              <p className="journal-card-links">{entry.links.length} link{entry.links.length > 1 ? 's' : ''}</p>
+            )}
           </button>
         ))}
       </div>
-
     </div>
   )
 }
