@@ -19,12 +19,49 @@ function ConfirmModal({ message, onConfirm, onCancel }) {
   )
 }
 
+function TagInput({ tags, onChange }) {
+  const [input, setInput] = useState('')
+
+  function addTag() {
+    const tag = input.trim().toLowerCase()
+    if (!tag || tags.includes(tag)) return
+    onChange([...tags, tag])
+    setInput('')
+  }
+
+  function removeTag(t) { onChange(tags.filter(x => x !== t)) }
+
+  return (
+    <div className="tag-input-wrap">
+      <div className="tags-list">
+        {tags.map(t => (
+          <span key={t} className="tag-chip">
+            {t}
+            <button className="tag-remove" onClick={() => removeTag(t)}>×</button>
+          </span>
+        ))}
+      </div>
+      <div className="tag-input-row">
+        <input
+          type="text"
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addTag())}
+          placeholder="Adicionar tag..."
+        />
+        <button className="btn btn-ghost btn-sm" onClick={addTag}>+</button>
+      </div>
+    </div>
+  )
+}
+
 function GoalFormModal({ goal, onClose, onSave, person1, person2 }) {
   const isNew = !goal
   const [form, setForm] = useState({
     title:       goal?.title       || '',
     description: goal?.description || '',
     type:        goal?.type        || 'shared',
+    tags:        goal?.tags        || [],
   })
 
   function set(key, val) { setForm(f => ({ ...f, [key]: val })) }
@@ -59,6 +96,11 @@ function GoalFormModal({ goal, onClose, onSave, person1, person2 }) {
           </select>
         </div>
 
+        <div className="form-group">
+          <label>Tags</label>
+          <TagInput tags={form.tags} onChange={t => set('tags', t)} />
+        </div>
+
         <div className="modal-actions">
           <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
           <button className="btn btn-primary" onClick={save}>Salvar</button>
@@ -68,7 +110,7 @@ function GoalFormModal({ goal, onClose, onSave, person1, person2 }) {
   )
 }
 
-function GoalCard({ goal, person1, person2, onClose, onDelete, onEdit }) {
+function GoalCard({ goal, person1, person2, onClose, onDelete, onEdit, onToggleFav }) {
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [confirmClose, setConfirmClose]   = useState(null)
 
@@ -76,16 +118,11 @@ function GoalCard({ goal, person1, person2, onClose, onDelete, onEdit }) {
     goal.type === 'shared'  ? 'Nosso' :
     goal.type === 'person1' ? person1 : person2
 
-  function handleCheck(status) {
-    if (goal.status === status) return
-    setConfirmClose(status)
-  }
-
   return (
     <div className="goal-card card">
       {confirmDelete && (
         <ConfirmModal
-          message={`Remover o objetivo "${goal.title}"? Essa ação não pode ser desfeita.`}
+          message={`Remover o objetivo "${goal.title}"?`}
           onConfirm={() => { setConfirmDelete(false); onDelete(goal.id) }}
           onCancel={() => setConfirmDelete(false)}
         />
@@ -93,8 +130,8 @@ function GoalCard({ goal, person1, person2, onClose, onDelete, onEdit }) {
       {confirmClose && (
         <ConfirmModal
           message={confirmClose === 'done'
-            ? `Marcar "${goal.title}" como conseguido? Ele vai para o histórico.`
-            : `Marcar "${goal.title}" como não conseguido? Ele vai para o histórico.`}
+            ? `Marcar "${goal.title}" como conseguido?`
+            : `Marcar "${goal.title}" como não conseguido?`}
           onConfirm={() => { onClose(goal.id, confirmClose); setConfirmClose(null) }}
           onCancel={() => setConfirmClose(null)}
         />
@@ -102,20 +139,33 @@ function GoalCard({ goal, person1, person2, onClose, onDelete, onEdit }) {
 
       <div className="goal-card-header">
         <h3 className="goal-card-title">{goal.title}</h3>
-        <span className="goal-owner-tag">{ownerLabel}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+          <button
+            className={`fav-btn ${goal.favorited ? 'active' : ''}`}
+            onClick={() => onToggleFav(goal.id, !goal.favorited)}
+            title="Favoritar"
+          >★</button>
+          <span className="goal-owner-tag">{ownerLabel}</span>
+        </div>
       </div>
 
       {goal.description && <p className="goal-card-desc">{goal.description}</p>}
+
+      {goal.tags && goal.tags.length > 0 && (
+        <div className="goal-tags">
+          {goal.tags.map(t => <span key={t} className="tag-chip readonly">{t}</span>)}
+        </div>
+      )}
 
       <div className="goal-checkboxes">
         <p className="checkboxes-label">Como foi no final do mês?</p>
         <div className="checkboxes-row">
           <label className="checkbox-item">
-            <input type="checkbox" checked={goal.status === 'done'} onChange={() => handleCheck('done')} />
+            <input type="checkbox" checked={goal.status === 'done'} onChange={() => setConfirmClose('done')} />
             <span className="checkbox-label achieved">Conseguimos</span>
           </label>
           <label className="checkbox-item">
-            <input type="checkbox" checked={goal.status === 'not_achieved'} onChange={() => handleCheck('not_achieved')} />
+            <input type="checkbox" checked={goal.status === 'not_achieved'} onChange={() => setConfirmClose('not_achieved')} />
             <span className="checkbox-label not-achieved">Não conseguimos</span>
           </label>
         </div>
@@ -138,11 +188,12 @@ function EmptySection({ label }) {
   )
 }
 
-function GoalSection({ label, sub, goals, person1, person2, onClose, onDelete, onEdit, searchTerm }) {
+function GoalSection({ label, sub, goals, person1, person2, onClose, onDelete, onEdit, onToggleFav, searchTerm }) {
   const [collapsed, setCollapsed] = useState(false)
 
   const filtered = searchTerm
-    ? goals.filter(g => g.title.toLowerCase().includes(searchTerm.toLowerCase()))
+    ? goals.filter(g => g.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (g.tags || []).some(t => t.includes(searchTerm.toLowerCase())))
     : goals
 
   return (
@@ -168,6 +219,7 @@ function GoalSection({ label, sub, goals, person1, person2, onClose, onDelete, o
                 onClose={onClose}
                 onDelete={onDelete}
                 onEdit={onEdit}
+                onToggleFav={onToggleFav}
               />
             ))
           }
@@ -186,6 +238,7 @@ export default function Goals({ data, reload }) {
   const [typeFilter, setTypeFilter]   = useState('all')
   const [monthFilter, setMonthFilter] = useState('all')
   const [searchTerm, setSearchTerm]   = useState('')
+  const [showFavOnly, setShowFavOnly] = useState(false)
 
   const active = goals.filter(g => g.status !== 'done' && g.status !== 'not_achieved')
 
@@ -193,7 +246,8 @@ export default function Goals({ data, reload }) {
     return list.filter(g => {
       const typeOk  = typeFilter === 'all' || g.type === typeFilter
       const monthOk = monthFilter === 'all' || g.createdMonth === monthFilter
-      return typeOk && monthOk
+      const favOk   = !showFavOnly || g.favorited
+      return typeOk && monthOk && favOk
     })
   }
 
@@ -234,11 +288,7 @@ export default function Goals({ data, reload }) {
     await fetch(`/api/goals/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        status,
-        progress: status === 'done' ? 100 : 0,
-        closedMonth: monthNames[now.getMonth()]
-      })
+      body: JSON.stringify({ status, progress: status === 'done' ? 100 : 0, closedMonth: monthNames[now.getMonth()] })
     })
     toast(status === 'done' ? 'Objetivo concluído' : 'Objetivo encerrado', 'info')
     reload()
@@ -247,6 +297,16 @@ export default function Goals({ data, reload }) {
   async function deleteGoal(id) {
     await fetch(`/api/goals/${id}`, { method: 'DELETE' })
     toast('Objetivo removido', 'error')
+    reload()
+  }
+
+  async function toggleFav(id, val) {
+    await fetch(`/api/goals/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ favorited: val })
+    })
+    toast(val ? 'Adicionado aos favoritos' : 'Removido dos favoritos', 'info')
     reload()
   }
 
@@ -292,18 +352,26 @@ export default function Goals({ data, reload }) {
               {MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
             </select>
           </div>
+          <div className="filter-group">
+            <label className="filter-label">Filtrar</label>
+            <button
+              className={`filter-select fav-filter-btn ${showFavOnly ? 'active' : ''}`}
+              onClick={() => setShowFavOnly(f => !f)}
+              style={{ cursor: 'pointer', textAlign: 'left' }}
+            >
+              {showFavOnly ? '★ Favoritos' : '☆ Todos'}
+            </button>
+          </div>
         </div>
         <div className="goals-search">
           <input
             type="text"
-            placeholder="Buscar objetivo..."
+            placeholder="Buscar por título ou tag..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             className="search-input"
           />
-          {searchTerm && (
-            <button className="search-clear" onClick={() => setSearchTerm('')}>×</button>
-          )}
+          {searchTerm && <button className="search-clear" onClick={() => setSearchTerm('')}>×</button>}
         </div>
       </div>
 
@@ -318,27 +386,18 @@ export default function Goals({ data, reload }) {
           onClose={closeGoal}
           onDelete={deleteGoal}
           onEdit={g => setEditGoal(g)}
+          onToggleFav={toggleFav}
           searchTerm={searchTerm}
         />
       ))}
 
       {modal && (
-        <GoalFormModal
-          person1={settings.person1}
-          person2={settings.person2}
-          onClose={() => setModal(false)}
-          onSave={saveGoal}
-        />
+        <GoalFormModal person1={settings.person1} person2={settings.person2}
+          onClose={() => setModal(false)} onSave={saveGoal} />
       )}
-
       {editGoal && (
-        <GoalFormModal
-          goal={editGoal}
-          person1={settings.person1}
-          person2={settings.person2}
-          onClose={() => setEditGoal(null)}
-          onSave={saveGoal}
-        />
+        <GoalFormModal goal={editGoal} person1={settings.person1} person2={settings.person2}
+          onClose={() => setEditGoal(null)} onSave={saveGoal} />
       )}
     </div>
   )

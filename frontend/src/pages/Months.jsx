@@ -4,6 +4,60 @@ import '../styles/months.css'
 
 const MONTH_ORDER = ['setembro','outubro','novembro','dezembro']
 
+function ReadingMode({ months, settings, onClose }) {
+  const filled = months.filter(m =>
+    m.reflection1 || m.reflection2 || m.events.length || m.specialMoments.length
+  )
+
+  return (
+    <div className="reading-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="reading-modal">
+        <div className="reading-header">
+          <h2 className="reading-title">Nossos meses</h2>
+          <button className="reading-close" onClick={onClose}>×</button>
+        </div>
+        <div className="reading-content">
+          {filled.length === 0 && (
+            <p className="reading-empty">Nenhum mês registrado ainda.</p>
+          )}
+          {filled.map(m => (
+            <div key={m.id} className="reading-month">
+              <h3 className="reading-month-label">{m.label}</h3>
+
+              {m.reflection1 && (
+                <div className="reading-reflection">
+                  <span className="reading-person">{settings.person1}</span>
+                  <p className="reading-text">{m.reflection1}</p>
+                </div>
+              )}
+              {m.reflection2 && (
+                <div className="reading-reflection">
+                  <span className="reading-person">{settings.person2}</span>
+                  <p className="reading-text">{m.reflection2}</p>
+                </div>
+              )}
+
+              {m.events.length > 0 && (
+                <div className="reading-items">
+                  <span className="reading-items-label">O que aconteceu</span>
+                  {m.events.map(e => <p key={e.id} className="reading-item">· {e.text}</p>)}
+                </div>
+              )}
+
+              {m.specialMoments.length > 0 && (
+                <div className="reading-items">
+                  <span className="reading-items-label">Momentos especiais</span>
+                  {m.specialMoments.map(s => <p key={s.id} className="reading-item">* {s.text}</p>)}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function MonthEntry({ month, settings, onSave, isCurrentMonth }) {
   const [open, setOpen]       = useState(isCurrentMonth)
   const [editing, setEditing] = useState(false)
@@ -26,8 +80,7 @@ function MonthEntry({ month, settings, onSave, isCurrentMonth }) {
   async function addEvent() {
     if (!form.newEvent.trim()) return
     await fetch(`/api/months/${month.id}/events`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text: form.newEvent })
     })
     set('newEvent', '')
@@ -44,8 +97,7 @@ function MonthEntry({ month, settings, onSave, isCurrentMonth }) {
   async function addMoment() {
     if (!form.newMoment.trim()) return
     await fetch(`/api/months/${month.id}/moments`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text: form.newMoment })
     })
     set('newMoment', '')
@@ -68,6 +120,13 @@ function MonthEntry({ month, settings, onSave, isCurrentMonth }) {
         <div className="month-header-left">
           <span className="month-name">{month.label}</span>
           {isCurrentMonth && <span className="month-current-tag">mês atual</span>}
+          {!isEmpty && (
+            <span className="month-counts">
+              {month.events.length > 0 && `${month.events.length} acontecimento${month.events.length > 1 ? 's' : ''}`}
+              {month.events.length > 0 && month.specialMoments.length > 0 && ' · '}
+              {month.specialMoments.length > 0 && `${month.specialMoments.length} momento${month.specialMoments.length > 1 ? 's' : ''}`}
+            </span>
+          )}
           {isEmpty
             ? <span className="month-status empty">ainda em branco</span>
             : <span className="month-status filled">registrado</span>
@@ -92,11 +151,13 @@ function MonthEntry({ month, settings, onSave, isCurrentMonth }) {
               <div>
                 <div className="form-group">
                   <label>{settings.person1}</label>
-                  <textarea value={form.reflection1} onChange={e => set('reflection1', e.target.value)} placeholder="Como foi esse mês para você?" rows={4} />
+                  <textarea value={form.reflection1} onChange={e => set('reflection1', e.target.value)}
+                    placeholder="Como foi esse mês para você?" rows={4} />
                 </div>
                 <div className="form-group">
                   <label>{settings.person2}</label>
-                  <textarea value={form.reflection2} onChange={e => set('reflection2', e.target.value)} placeholder="Como foi esse mês para você?" rows={4} />
+                  <textarea value={form.reflection2} onChange={e => set('reflection2', e.target.value)}
+                    placeholder="Como foi esse mês para você?" rows={4} />
                 </div>
                 <div className="modal-actions" style={{ justifyContent: 'flex-start' }}>
                   <button className="btn btn-primary" onClick={saveReflections}>Salvar</button>
@@ -106,8 +167,8 @@ function MonthEntry({ month, settings, onSave, isCurrentMonth }) {
             ) : (
               <div className="month-reflections">
                 {[
-                  { key: 'reflection1', name: settings.person1, text: month.reflection1 },
-                  { key: 'reflection2', name: settings.person2, text: month.reflection2 },
+                  { key: 'r1', name: settings.person1, text: month.reflection1 },
+                  { key: 'r2', name: settings.person2, text: month.reflection2 },
                 ].map(r => (
                   <div key={r.key} className={`reflection-block ${!r.text ? 'empty-reflection' : ''}`}>
                     <span className="reflection-name">{r.name}</span>
@@ -136,7 +197,8 @@ function MonthEntry({ month, settings, onSave, isCurrentMonth }) {
               {month.events.length === 0 && <p className="month-empty-hint">Nenhum acontecimento registrado ainda.</p>}
             </div>
             <div className="month-add-row">
-              <input type="text" value={form.newEvent} onChange={e => set('newEvent', e.target.value)} placeholder="Adicionar acontecimento..." onKeyDown={e => e.key === 'Enter' && addEvent()} />
+              <input type="text" value={form.newEvent} onChange={e => set('newEvent', e.target.value)}
+                placeholder="Adicionar acontecimento..." onKeyDown={e => e.key === 'Enter' && addEvent()} />
               <button className="btn btn-ghost btn-sm" onClick={addEvent}>Adicionar</button>
             </div>
           </div>
@@ -157,7 +219,8 @@ function MonthEntry({ month, settings, onSave, isCurrentMonth }) {
               {month.specialMoments.length === 0 && <p className="month-empty-hint">Nenhum momento especial registrado ainda.</p>}
             </div>
             <div className="month-add-row">
-              <input type="text" value={form.newMoment} onChange={e => set('newMoment', e.target.value)} placeholder="Adicionar momento especial..." onKeyDown={e => e.key === 'Enter' && addMoment()} />
+              <input type="text" value={form.newMoment} onChange={e => set('newMoment', e.target.value)}
+                placeholder="Adicionar momento especial..." onKeyDown={e => e.key === 'Enter' && addMoment()} />
               <button className="btn btn-ghost btn-sm" onClick={addMoment}>Adicionar</button>
             </div>
           </div>
@@ -169,6 +232,7 @@ function MonthEntry({ month, settings, onSave, isCurrentMonth }) {
 
 export default function Months({ data, reload }) {
   const { months, settings } = data
+  const [readingMode, setReadingMode] = useState(false)
 
   const now = new Date()
   const currentMonthName = ['janeiro','fevereiro','março','abril','maio','junho',
@@ -189,11 +253,18 @@ export default function Months({ data, reload }) {
 
   return (
     <div className="months-page">
+      {readingMode && (
+        <ReadingMode months={sorted} settings={settings} onClose={() => setReadingMode(false)} />
+      )}
+
       <div className="section-header">
         <div>
           <h1 className="section-title">Nossos meses</h1>
-          <p className="section-sub">O diário desse período juntos, mesmo à distância.</p>
+          <p className="section-sub">O diário desse período.</p>
         </div>
+        <button className="btn btn-ghost" onClick={() => setReadingMode(true)}>
+          Modo leitura
+        </button>
       </div>
 
       <p className="months-intro">

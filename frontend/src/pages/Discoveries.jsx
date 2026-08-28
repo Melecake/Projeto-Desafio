@@ -23,10 +23,16 @@ function formatDate(str) {
   return `${d}/${m}/${y}`
 }
 
+function avgRating(items) {
+  const rated = items.filter(i => i.done && i.rating)
+  if (!rated.length) return null
+  return (rated.reduce((s, i) => s + i.rating, 0) / rated.length).toFixed(1)
+}
+
 function sortItems(items, sort) {
   return [...items].sort((a, b) => {
-    if (sort === 'date_asc')  return a.createdAt?.localeCompare(b.createdAt)
-    if (sort === 'date_desc') return b.createdAt?.localeCompare(a.createdAt)
+    if (sort === 'date_asc')  return (a.created_at || '').localeCompare(b.created_at || '')
+    if (sort === 'date_desc') return (b.created_at || '').localeCompare(a.created_at || '')
     if (sort === 'name_asc')  return a.title.localeCompare(b.title)
     if (sort === 'rating')    return (b.rating || 0) - (a.rating || 0)
     return 0
@@ -80,9 +86,21 @@ function ReviewModal({ item, onClose, onSave }) {
 
 function ItemFormModal({ category, item, onClose, onSave }) {
   const isEdit = !!item
-  const [form, setForm] = useState({ title: item?.title || '', description: item?.description || '' })
+  const [form, setForm] = useState({
+    title:       item?.title       || '',
+    description: item?.description || '',
+    tags:        item?.tags        || [],
+    category:    item?.category    || category,
+  })
   function set(key, val) { setForm(f => ({ ...f, [key]: val })) }
-  const cat = CATEGORIES.find(c => c.id === category)
+  const [tagInput, setTagInput] = useState('')
+
+  function addTag() {
+    const t = tagInput.trim().toLowerCase()
+    if (!t || form.tags.includes(t)) return
+    set('tags', [...form.tags, t])
+    setTagInput('')
+  }
 
   async function save() {
     if (!form.title.trim()) return
@@ -93,15 +111,43 @@ function ItemFormModal({ category, item, onClose, onSave }) {
   return (
     <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal">
-        <h2 className="modal-title">{isEdit ? 'Editar' : `Adicionar em ${cat.label}`}</h2>
+        <h2 className="modal-title">{isEdit ? 'Editar' : `Adicionar`}</h2>
+
         <div className="form-group">
           <label>Nome</label>
           <input type="text" value={form.title} onChange={e => set('title', e.target.value)} placeholder="Nome..." autoFocus />
         </div>
+
         <div className="form-group">
           <label>Descrição</label>
           <textarea value={form.description} onChange={e => set('description', e.target.value)} placeholder="Uma frase sobre esse item..." rows={2} />
         </div>
+
+        <div className="form-group">
+          <label>Categoria</label>
+          <select value={form.category} onChange={e => set('category', e.target.value)}>
+            {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+          </select>
+        </div>
+
+        <div className="form-group">
+          <label>Tags</label>
+          <div className="tags-list" style={{ marginBottom: '0.35rem' }}>
+            {form.tags.map(t => (
+              <span key={t} className="tag-chip">
+                {t}
+                <button className="tag-remove" onClick={() => set('tags', form.tags.filter(x => x !== t))}>×</button>
+              </span>
+            ))}
+          </div>
+          <div className="tag-input-row">
+            <input type="text" value={tagInput} onChange={e => setTagInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addTag())}
+              placeholder="Adicionar tag..." />
+            <button className="btn btn-ghost btn-sm" onClick={addTag}>+</button>
+          </div>
+        </div>
+
         <div className="modal-actions">
           <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
           <button className="btn btn-primary" onClick={save}>Salvar</button>
@@ -111,7 +157,7 @@ function ItemFormModal({ category, item, onClose, onSave }) {
   )
 }
 
-function DiscoveryCard({ item, cat, onMarkDone, onDelete, onUndone, onEdit }) {
+function DiscoveryCard({ item, cat, onMarkDone, onDelete, onUndone, onEdit, onToggleFav }) {
   const [reviewModal, setReviewModal] = useState(false)
 
   return (
@@ -123,13 +169,22 @@ function DiscoveryCard({ item, cat, onMarkDone, onDelete, onUndone, onEdit }) {
       <div className="discovery-card-header">
         <h3 className="discovery-card-title">{item.title}</h3>
         <div className="discovery-card-actions">
+          <button className={`fav-btn ${item.favorited ? 'active' : ''}`}
+            onClick={() => onToggleFav(item.id, !item.favorited)}>★</button>
           {!item.done && <button className="discovery-edit" onClick={() => onEdit(item)}>✎</button>}
           <button className="discovery-del" onClick={() => onDelete(item.id)}>×</button>
         </div>
       </div>
 
       {item.description && <p className="discovery-card-desc">{item.description}</p>}
-      <p className="discovery-card-date">Adicionado em {formatDate(item.createdAt)}</p>
+
+      {item.tags && item.tags.length > 0 && (
+        <div className="goal-tags">
+          {item.tags.map(t => <span key={t} className="tag-chip readonly">{t}</span>)}
+        </div>
+      )}
+
+      <p className="discovery-card-date">Adicionado em {formatDate(item.created_at)}</p>
 
       {item.done ? (
         <div className="discovery-done-info">
@@ -154,58 +209,34 @@ function DiscoveryCard({ item, cat, onMarkDone, onDelete, onUndone, onEdit }) {
   )
 }
 
-function CategorySection({ cat, items, onAdd, onMarkDone, onDelete, onUndone, onEdit }) {
+function CategorySection({ cat, items, onAdd, onMarkDone, onDelete, onUndone, onEdit, onToggleFav }) {
   const [collapsed, setCollapsed] = useState(false)
   const [addModal, setAddModal]   = useState(false)
   const [editItem, setEditItem]   = useState(null)
   const [sort, setSort]           = useState('date_desc')
   const [search, setSearch]       = useState('')
-  const toast = useToast()
-
-  const touchStartX = useRef(null)
-
-  function handleTouchStart(e) { touchStartX.current = e.touches[0].clientX }
-  function handleTouchEnd(e, item, pending) {
-    if (touchStartX.current === null) return
-    const diff = touchStartX.current - e.changedTouches[0].clientX
-    touchStartX.current = null
-    if (Math.abs(diff) < 60) return
-  }
 
   const pending = items.filter(i => !i.done)
   const done    = items.filter(i => i.done)
+  const avg     = avgRating(items)
 
-  const filteredPending = sortItems(
-    search ? pending.filter(i => i.title.toLowerCase().includes(search.toLowerCase())) : pending,
+  const filterAndSort = list => sortItems(
+    search ? list.filter(i =>
+      i.title.toLowerCase().includes(search.toLowerCase()) ||
+      (i.tags || []).some(t => t.includes(search.toLowerCase()))
+    ) : list,
     sort
   )
-  const filteredDone = sortItems(
-    search ? done.filter(i => i.title.toLowerCase().includes(search.toLowerCase())) : done,
-    sort
-  )
-
-  async function handleAdd(form, id) {
-    await onAdd(form, id)
-    toast(id ? `${cat.label} atualizado` : `Adicionado em ${cat.label}`)
-  }
-
-  async function handleEdit(form, id) {
-    await onEdit(form, id)
-    toast('Item atualizado')
-  }
 
   return (
     <div className="discovery-section">
-      {addModal && (
-        <ItemFormModal category={cat.id} onClose={() => setAddModal(false)} onSave={handleAdd} />
-      )}
-      {editItem && (
-        <ItemFormModal category={cat.id} item={editItem} onClose={() => setEditItem(null)} onSave={handleEdit} />
-      )}
+      {addModal && <ItemFormModal category={cat.id} onClose={() => setAddModal(false)} onSave={onAdd} />}
+      {editItem && <ItemFormModal category={cat.id} item={editItem} onClose={() => setEditItem(null)} onSave={onEdit} />}
 
       <div className="discovery-section-header">
         <button className="discovery-section-toggle" onClick={() => setCollapsed(c => !c)}>
           <span className="discovery-section-title">{cat.label}</span>
+          {avg && <span className="discovery-avg">média {avg}★</span>}
           <span className="section-chevron">{collapsed ? '▼' : '▲'}</span>
         </button>
         <button className="btn btn-primary btn-sm" onClick={() => setAddModal(true)}>+ Adicionar</button>
@@ -216,13 +247,9 @@ function CategorySection({ cat, items, onAdd, onMarkDone, onDelete, onUndone, on
           {items.length > 0 && (
             <div className="discovery-controls">
               <div className="discovery-search-wrap">
-                <input
-                  type="text"
-                  className="search-input"
+                <input type="text" className="search-input"
                   placeholder={`Buscar em ${cat.label}...`}
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                />
+                  value={search} onChange={e => setSearch(e.target.value)} />
                 {search && <button className="search-clear" onClick={() => setSearch('')}>×</button>}
               </div>
               <select className="filter-select" value={sort} onChange={e => setSort(e.target.value)}>
@@ -231,24 +258,24 @@ function CategorySection({ cat, items, onAdd, onMarkDone, onDelete, onUndone, on
             </div>
           )}
 
-          {filteredPending.length > 0 && (
+          {filterAndSort(pending).length > 0 && (
             <div className="discovery-list">
-              {filteredPending.map(item => (
+              {filterAndSort(pending).map(item => (
                 <DiscoveryCard key={item.id} item={item} cat={cat}
-                  onMarkDone={onMarkDone} onDelete={onDelete}
-                  onUndone={onUndone} onEdit={i => setEditItem(i)} />
+                  onMarkDone={onMarkDone} onDelete={onDelete} onUndone={onUndone}
+                  onEdit={i => setEditItem(i)} onToggleFav={onToggleFav} />
               ))}
             </div>
           )}
 
-          {filteredDone.length > 0 && (
+          {filterAndSort(done).length > 0 && (
             <div className="discovery-done-section">
               <p className="discovery-done-label">{cat.doneLabel}</p>
               <div className="discovery-list">
-                {filteredDone.map(item => (
+                {filterAndSort(done).map(item => (
                   <DiscoveryCard key={item.id} item={item} cat={cat}
-                    onMarkDone={onMarkDone} onDelete={onDelete}
-                    onUndone={onUndone} onEdit={i => setEditItem(i)} />
+                    onMarkDone={onMarkDone} onDelete={onDelete} onUndone={onUndone}
+                    onEdit={i => setEditItem(i)} onToggleFav={onToggleFav} />
                 ))}
               </div>
             </div>
@@ -277,12 +304,14 @@ export default function Discoveries({ data, reload }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form)
       })
+      toast('Item atualizado')
     } else {
       await fetch('/api/discoveries', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form)
       })
+      toast('Item adicionado')
     }
     reload()
   }
@@ -313,6 +342,16 @@ export default function Discoveries({ data, reload }) {
     reload()
   }
 
+  async function toggleFav(id, val) {
+    await fetch(`/api/discoveries/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ favorited: val })
+    })
+    toast(val ? 'Adicionado aos favoritos' : 'Removido dos favoritos', 'info')
+    reload()
+  }
+
   return (
     <div className="discoveries-page">
       <div className="section-header">
@@ -332,6 +371,7 @@ export default function Discoveries({ data, reload }) {
           onDelete={deleteItem}
           onUndone={markUndone}
           onEdit={addItem}
+          onToggleFav={toggleFav}
         />
       ))}
     </div>

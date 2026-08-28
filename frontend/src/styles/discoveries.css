@@ -199,3 +199,10 @@
 @media (max-width: 600px) {
   .discovery-list { grid-template-columns: 1fr 1fr; }
 }
+
+.discovery-avg {
+  font-size: 0.72rem;
+  color: var(--toffee);
+  font-style: italic;
+  margin-left: 0.5rem;
+}
