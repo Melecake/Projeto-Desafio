@@ -438,8 +438,8 @@ function AddWithTmdb({ cat, onSave, onClose }) {
 // ── Discovery card ────────────────────────────────────────────────────────────
 function DiscoveryCard({ item, cat, onMarkDone, onDelete, onUndone, onEdit, onToggleFav }) {
   const [detailOpen, setDetailOpen] = useState(false)
-  const hasPoster = !!item.poster
-  const descLimit = 80
+  const hasPoster  = !!item.poster
+  const descLimit  = 80
 
   return (
     <div className="discovery-card card">
@@ -453,37 +453,43 @@ function DiscoveryCard({ item, cat, onMarkDone, onDelete, onUndone, onEdit, onTo
         />
       )}
 
-      {/* Poster ou sem imagem */}
+      {/* Poster — filmes e séries */}
       {hasPoster && (
         <div className="discovery-card-poster" onClick={() => setDetailOpen(true)}>
           <img src={item.poster} alt={item.title} />
           {item.done && (
-            <div className="discovery-card-poster-badge">
-              {item.status === 'not_achieved' ? '✗' : '✓'}
-            </div>
+            <div className="discovery-card-poster-badge">✓</div>
           )}
         </div>
       )}
 
       <div className="discovery-card-body">
         <div className="discovery-card-header">
-          <h3 className="discovery-card-title" onClick={() => setDetailOpen(true)}
-            style={{ cursor: 'pointer' }}>
+          <h3
+            className="discovery-card-title"
+            onClick={() => setDetailOpen(true)}
+            style={{ cursor: 'pointer' }}
+          >
             {item.title}
           </h3>
           <div className="discovery-card-actions">
-            <button className={`fav-btn ${item.favorited ? 'active' : ''}`}
-              onClick={() => onToggleFav(item.id, !item.favorited)}>★</button>
-            {!item.done && <button className="discovery-edit" onClick={() => onEdit(item)}>✎</button>}
+            <button
+              className={`fav-btn ${item.favorited ? 'active' : ''}`}
+              onClick={() => onToggleFav(item.id, !item.favorited)}
+            >★</button>
+            {!item.done && (
+              <button className="discovery-edit" onClick={() => onEdit(item)}>✎</button>
+            )}
             <button className="discovery-del" onClick={() => onDelete(item.id)}>×</button>
           </div>
         </div>
 
-        {/* Descrição truncada — só se não tiver poster */}
+        {/* Descrição só aparece se não tiver poster */}
         {!hasPoster && item.description && (
           <p className="discovery-card-desc">
             {item.description.length > descLimit
-              ? <>{item.description.slice(0, descLimit)}…{' '}
+              ? <>
+                  {item.description.slice(0, descLimit)}…{' '}
                   <button className="desc-more" onClick={() => setDetailOpen(true)}>ver mais</button>
                 </>
               : item.description
@@ -493,7 +499,9 @@ function DiscoveryCard({ item, cat, onMarkDone, onDelete, onUndone, onEdit, onTo
 
         {item.tags && item.tags.length > 0 && (
           <div className="goal-tags">
-            {item.tags.map(t => <span key={t} className="tag-chip readonly">{t}</span>)}
+            {item.tags.map(t => (
+              <span key={t} className="tag-chip readonly">{t}</span>
+            ))}
           </div>
         )}
 
@@ -505,21 +513,27 @@ function DiscoveryCard({ item, cat, onMarkDone, onDelete, onUndone, onEdit, onTo
             {item.review && (
               <p className="discovery-review">
                 {item.review.length > 80
-                  ? <>{item.review.slice(0, 80)}…{' '}
+                  ? <>
+                      {item.review.slice(0, 80)}…{' '}
                       <button className="desc-more" onClick={() => setDetailOpen(true)}>ver mais</button>
                     </>
                   : `"${item.review}"`
                 }
               </p>
             )}
-            <button className="btn btn-ghost btn-sm" style={{ marginTop: '0.5rem' }}
-              onClick={() => onUndone(item.id)}>
+            <button
+              className="btn btn-ghost btn-sm"
+              style={{ marginTop: '0.5rem' }}
+              onClick={() => onUndone(item.id)}
+            >
               Desfazer
             </button>
           </div>
         ) : (
-          <button className="btn btn-ghost btn-sm discovery-action-btn"
-            onClick={() => setDetailOpen(true)}>
+          <button
+            className="btn btn-ghost btn-sm discovery-action-btn"
+            onClick={() => setDetailOpen(true)}
+          >
             {cat.actionLabel}
           </button>
         )}
@@ -530,22 +544,25 @@ function DiscoveryCard({ item, cat, onMarkDone, onDelete, onUndone, onEdit, onTo
 
 // ── Category section ──────────────────────────────────────────────────────────
 function CategorySection({ cat, items, onAdd, onEdit, onMarkDone, onDelete, onUndone, onToggleFav }) {
-  const [collapsed, setCollapsed] = useState(true) // começa fechado
-  const [addModal, setAddModal]   = useState(false)
-  const [editItem, setEditItem]   = useState(null)
-  const [sort, setSort]           = useState('date_desc')
-  const [search, setSearch]       = useState('')
+  const [collapsed, setCollapsed]       = useState(true)
+  const [addModal, setAddModal]         = useState(false)
+  const [editItem, setEditItem]         = useState(null)
+  const [sort, setSort]                 = useState('date_desc')
+  const [search, setSearch]             = useState('')
+  const [showControls, setShowControls] = useState(false) // lupa
 
-  const pending = items.filter(i => !i.done)
-  const done    = items.filter(i => i.done)
-  const avg     = avgRating(items)
+  const pending  = items.filter(i => !i.done)
+  const done     = items.filter(i => i.done)
+  const avg      = avgRating(items)
   const showTmdb = cat.id === 'filmes' || cat.id === 'series'
 
   const filterAndSort = list => sortItems(
-    search ? list.filter(i =>
-      i.title.toLowerCase().includes(search.toLowerCase()) ||
-      (i.tags || []).some(t => t.includes(search.toLowerCase()))
-    ) : list,
+    search
+      ? list.filter(i =>
+          i.title.toLowerCase().includes(search.toLowerCase()) ||
+          (i.tags || []).some(t => t.includes(search.toLowerCase()))
+        )
+      : list,
     sort
   )
 
@@ -556,47 +573,84 @@ function CategorySection({ cat, items, onAdd, onEdit, onMarkDone, onDelete, onUn
           <div className="modal">
             <h2 className="modal-title">Adicionar em {cat.label}</h2>
             {showTmdb
-              ? <AddWithTmdb cat={cat}
+              ? <AddWithTmdb
+                  cat={cat}
                   onSave={form => { onAdd({ ...form, category: cat.id }); setAddModal(false) }}
-                  onClose={() => setAddModal(false)} />
-              : <AddSimple cat={cat}
+                  onClose={() => setAddModal(false)}
+                />
+              : <AddSimple
+                  cat={cat}
                   onSave={form => { onAdd({ ...form, category: cat.id }); setAddModal(false) }}
-                  onClose={() => setAddModal(false)} />
+                  onClose={() => setAddModal(false)}
+                />
             }
           </div>
         </div>
       )}
 
       {editItem && (
-        <ItemFormModal category={cat.id} item={editItem}
+        <ItemFormModal
+          category={cat.id}
+          item={editItem}
           onClose={() => setEditItem(null)}
-          onSave={form => { onEdit(form, editItem.id); setEditItem(null) }} />
+          onSave={form => { onEdit(form, editItem.id); setEditItem(null) }}
+        />
       )}
 
+      {/* Cabeçalho da seção */}
       <div className="discovery-section-header">
         <button className="discovery-section-toggle" onClick={() => setCollapsed(c => !c)}>
           <span className="discovery-section-title">{cat.label}</span>
-          <span className="discovery-section-count">
-            {items.length > 0 && `${items.length} item${items.length > 1 ? 's' : ''}`}
-          </span>
+          {items.length > 0 && (
+            <span className="discovery-section-count">
+              {items.length} item{items.length > 1 ? 's' : ''}
+            </span>
+          )}
           {avg && <span className="discovery-avg">· média {avg}★</span>}
           <span className="section-chevron">{collapsed ? '▼' : '▲'}</span>
         </button>
-        <button className="btn btn-primary btn-sm" onClick={() => setAddModal(true)}>+ Adicionar</button>
+
+        <div className="discovery-section-actions">
+          {/* Lupa — só aparece quando tem itens e a seção está aberta */}
+          {!collapsed && items.length > 0 && (
+            <button
+              className={`tmdb-lupa-btn ${showControls ? 'active' : ''}`}
+              onClick={() => { setShowControls(c => !c); setSearch('') }}
+              title="Buscar e filtrar"
+            >
+              🔍
+            </button>
+          )}
+          <button className="btn btn-primary btn-sm" onClick={() => setAddModal(true)}>
+            + Adicionar
+          </button>
+        </div>
       </div>
 
       {!collapsed && (
         <div className="discovery-section-body">
-          {items.length > 0 && (
+
+          {/* Controles de busca — visíveis só quando lupa ativa */}
+          {showControls && items.length > 0 && (
             <div className="discovery-controls">
-              <div className="discovery-search-wrap">
-                <input type="text" className="search-input"
-                  placeholder={`Buscar em ${cat.label}...`}
-                  value={search} onChange={e => setSearch(e.target.value)} />
-                {search && <button className="search-clear" onClick={() => setSearch('')}>×</button>}
-              </div>
-              <select className="filter-select" value={sort} onChange={e => setSort(e.target.value)}>
-                {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              <input
+                type="text"
+                className="search-input discovery-search-input"
+                placeholder={`Buscar em ${cat.label}...`}
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+              />
+              {search && (
+                <button className="search-clear-inline" onClick={() => setSearch('')}>×</button>
+              )}
+              <select
+                className="filter-select discovery-filter-select"
+                value={sort}
+                onChange={e => setSort(e.target.value)}
+              >
+                {SORT_OPTIONS.map(o => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
               </select>
             </div>
           )}
@@ -604,9 +658,16 @@ function CategorySection({ cat, items, onAdd, onEdit, onMarkDone, onDelete, onUn
           {filterAndSort(pending).length > 0 && (
             <div className="discovery-list">
               {filterAndSort(pending).map(item => (
-                <DiscoveryCard key={item.id} item={item} cat={cat}
-                  onMarkDone={onMarkDone} onDelete={onDelete} onUndone={onUndone}
-                  onEdit={i => setEditItem(i)} onToggleFav={onToggleFav} />
+                <DiscoveryCard
+                  key={item.id}
+                  item={item}
+                  cat={cat}
+                  onMarkDone={onMarkDone}
+                  onDelete={onDelete}
+                  onUndone={onUndone}
+                  onEdit={i => setEditItem(i)}
+                  onToggleFav={onToggleFav}
+                />
               ))}
             </div>
           )}
@@ -616,9 +677,16 @@ function CategorySection({ cat, items, onAdd, onEdit, onMarkDone, onDelete, onUn
               <p className="discovery-done-label">{cat.doneLabel}</p>
               <div className="discovery-list">
                 {filterAndSort(done).map(item => (
-                  <DiscoveryCard key={item.id} item={item} cat={cat}
-                    onMarkDone={onMarkDone} onDelete={onDelete} onUndone={onUndone}
-                    onEdit={i => setEditItem(i)} onToggleFav={onToggleFav} />
+                  <DiscoveryCard
+                    key={item.id}
+                    item={item}
+                    cat={cat}
+                    onMarkDone={onMarkDone}
+                    onDelete={onDelete}
+                    onUndone={onUndone}
+                    onEdit={i => setEditItem(i)}
+                    onToggleFav={onToggleFav}
+                  />
                 ))}
               </div>
             </div>
