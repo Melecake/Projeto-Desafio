@@ -281,6 +281,7 @@ function CategorySection({ cat, items, onAdd, onMarkDone, onDelete, onUndone, on
   const [editItem, setEditItem]   = useState(null)
   const [sort, setSort]           = useState('date_desc')
   const [search, setSearch]       = useState('')
+  const toast = useToast()
 
   const pending = items.filter(i => !i.done)
   const done    = items.filter(i => i.done)
@@ -294,10 +295,34 @@ function CategorySection({ cat, items, onAdd, onMarkDone, onDelete, onUndone, on
     sort
   )
 
+  async function handleAdd(form) {
+    await onAdd({ ...form, category: cat.id })
+    setAddModal(false)
+  }
+
+  async function handleEdit(form, id) {
+    await onEdit(form, id)
+    setEditItem(null)
+    toast('Item atualizado')
+  }
+
   return (
     <div className="discovery-section">
-      {addModal && <ItemFormModal category={cat.id} onClose={() => setAddModal(false)} onSave={onAdd} />}
-      {editItem && <ItemFormModal category={cat.id} item={editItem} onClose={() => setEditItem(null)} onSave={onEdit} />}
+      {addModal && (
+        <ItemFormModal
+          category={cat.id}
+          onClose={() => setAddModal(false)}
+          onSave={handleAdd}
+        />
+      )}
+      {editItem && (
+        <ItemFormModal
+          category={cat.id}
+          item={editItem}
+          onClose={() => setEditItem(null)}
+          onSave={handleEdit}
+        />
+      )}
 
       <div className="discovery-section-header">
         <button className="discovery-section-toggle" onClick={() => setCollapsed(c => !c)}>
@@ -363,22 +388,23 @@ export default function Discoveries({ data, reload }) {
   const discoveries = data.discoveries || []
   const toast = useToast()
 
-  async function addItem(form, id) {
-    if (id) {
-      await fetch(`/api/discoveries/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form)
-      })
-      toast('Item atualizado')
-    } else {
-      await fetch('/api/discoveries', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form)
-      })
-      toast('Item adicionado')
-    }
+  async function addItem(form) {
+    await fetch('/api/discoveries', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form)
+    })
+    toast('Item adicionado')
+    reload()
+  }
+
+  async function editItem(form, id) {
+    await fetch(`/api/discoveries/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form)
+    })
+    toast('Item atualizado')
     reload()
   }
 
@@ -436,7 +462,7 @@ export default function Discoveries({ data, reload }) {
           onMarkDone={markDone}
           onDelete={deleteItem}
           onUndone={markUndone}
-          onEdit={addItem}
+          onEdit={editItem}
           onToggleFav={toggleFav}
         />
       ))}
