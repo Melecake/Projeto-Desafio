@@ -420,53 +420,55 @@ export default function Home({ data, reload }) {
       {/* Grid principal */}
 <div className="home-grid">
 
-  {/* Coluna esquerda — stats e descobertas */}
-  <div className="home-col-left">
-    <div className="home-stats card">
-      <h2 className="home-card-title">Como estamos</h2>
-      <div className="stats-single">
-        <span className="stat-number-big">{done.length}</span>
-        <span className="stat-label-big">
-          {done.length === 1 ? 'objetivo concluído' : 'objetivos concluídos'}
-        </span>
-      </div>
-      <p className="stats-sub">de {goals.length} no total</p>
+  {/* Coluna esquerda — stats, descobertas e recados */}
+<div className="home-col-left">
+  <div className="home-stats card">
+    <h2 className="home-card-title">Como estamos</h2>
+    <div className="stats-single">
+      <span className="stat-number-big">{done.length}</span>
+      <span className="stat-label-big">
+        {done.length === 1 ? 'objetivo concluído' : 'objetivos concluídos'}
+      </span>
     </div>
+    <p className="stats-sub">de {goals.length} no total</p>
+  </div>
 
-    {conquistas.length > 0 && (
-      <div className="home-conquistas card">
-        <h2 className="home-card-title">Descobertas concluídas</h2>
-        <div className="conquistas-list">
-          {conquistas.map(c => (
-            <div key={c.label} className="conquista-item">
-              <span className="conquista-label">{c.label}</span>
-              <span className="conquista-count">{c.count}</span>
-            </div>
+  {conquistas.length > 0 && (
+    <div className="home-conquistas card">
+      <h2 className="home-card-title">Descobertas concluídas</h2>
+      <div className="conquistas-list">
+        {conquistas.map(c => (
+          <div key={c.label} className="conquista-item">
+            <span className="conquista-label">{c.label}</span>
+            <span className="conquista-count">{c.count}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )}
+
+  {lastDiscovery && (
+    <div className="home-last-discovery card">
+      <h2 className="home-card-title">Última descoberta</h2>
+      <p className="last-discovery-category">
+        {lastDiscovery.category.charAt(0).toUpperCase() + lastDiscovery.category.slice(1)}
+      </p>
+      <p className="last-discovery-title">{lastDiscovery.title}</p>
+      {lastDiscovery.done && lastDiscovery.rating && (
+        <div className="last-discovery-stars">
+          {[1,2,3,4,5].map(n => (
+            <span key={n} className={`star-display ${n <= lastDiscovery.rating ? 'filled' : ''}`}>★</span>
           ))}
         </div>
-      </div>
-    )}
+      )}
+      <p className="last-discovery-date">
+        {lastDiscovery.done ? 'Concluído' : 'Adicionado'} em {lastDiscovery.created_at}
+      </p>
+    </div>
+  )}
 
-    {lastDiscovery && (
-      <div className="home-last-discovery card">
-        <h2 className="home-card-title">Última descoberta</h2>
-        <p className="last-discovery-category">
-          {lastDiscovery.category.charAt(0).toUpperCase() + lastDiscovery.category.slice(1)}
-        </p>
-        <p className="last-discovery-title">{lastDiscovery.title}</p>
-        {lastDiscovery.done && lastDiscovery.rating && (
-          <div className="last-discovery-stars">
-            {[1,2,3,4,5].map(n => (
-              <span key={n} className={`star-display ${n <= lastDiscovery.rating ? 'filled' : ''}`}>★</span>
-            ))}
-          </div>
-        )}
-        <p className="last-discovery-date">
-          {lastDiscovery.done ? 'Concluído' : 'Adicionado'} em {lastDiscovery.created_at}
-        </p>
-      </div>
-    )}
-  </div>
+  <QuickNotes notes={notes} settings={settings} reload={reload} />
+</div>
 
   {/* Coluna centro — calendário e objetivos compartilhados */}
   <div className="home-col-center">
@@ -489,75 +491,73 @@ export default function Home({ data, reload }) {
     </div>
   </div>
 
-  {/* Coluna direita — timeline, individuais e recados */}
-  <div className="home-col-right">
-    <div className="home-timeline card">
-      <h2 className="home-card-title">Nossa jornada</h2>
-      <div className="timeline">
-        {timeline.map((t, i) => {
-          const monthData = months.find(m => m.month === t.id)
-          const isCurrent = t.id === currentMonth
-          const hasCont   = monthData && (
-            monthData.reflection1 || monthData.reflection2 ||
-            monthData.events.length || monthData.specialMoments.length
-          )
-          return (
-            <div key={t.id} className={`timeline-item ${isCurrent ? 'current' : ''} ${hasCont ? 'has-content' : ''}`}>
-              <div className="timeline-dot" />
-              {i < timeline.length - 1 && <div className="timeline-line" />}
-              <div className="timeline-content">
-                <span className="timeline-month">{t.label}</span>
-                {isCurrent && <span className="timeline-here">estamos aqui</span>}
-                {hasCont && !isCurrent && <span className="timeline-done">registrado</span>}
-              </div>
+  {/* Coluna direita — timeline, individuais */}
+<div className="home-col-right">
+  <div className="home-timeline card">
+    <h2 className="home-card-title">Nossa jornada</h2>
+    <div className="timeline">
+      {timeline.map((t, i) => {
+        const monthData = months.find(m => m.month === t.id)
+        const isCurrent = t.id === currentMonth
+        const hasCont   = monthData && (
+          monthData.reflection1 || monthData.reflection2 ||
+          monthData.events.length || monthData.specialMoments.length
+        )
+        return (
+          <div key={t.id} className={`timeline-item ${isCurrent ? 'current' : ''} ${hasCont ? 'has-content' : ''}`}>
+            <div className="timeline-dot" />
+            {i < timeline.length - 1 && <div className="timeline-line" />}
+            <div className="timeline-content">
+              <span className="timeline-month">{t.label}</span>
+              {isCurrent && <span className="timeline-here">estamos aqui</span>}
+              {hasCont && !isCurrent && <span className="timeline-done">registrado</span>}
             </div>
-          )
-        })}
-        <div className="timeline-reunion">
-          <div className="reunion-dot">*</div>
-          <div className="timeline-content">
-            <span className="timeline-month">18 de dezembro</span>
-            <span className="timeline-done">reencontro</span>
           </div>
+        )
+      })}
+      <div className="timeline-reunion">
+        <div className="reunion-dot">*</div>
+        <div className="timeline-content">
+          <span className="timeline-month">18 de dezembro</span>
+          <span className="timeline-done">reencontro</span>
         </div>
       </div>
     </div>
-
-    <div className="home-individual card">
-      <h2 className="home-card-title">Objetivos individuais</h2>
-      <div className="individual-row">
-        <div className="individual-person">
-          <span className="individual-name">{settings.person1}</span>
-          <ul className="individual-list">
-            {person1.filter(g => g.status !== 'done' && g.status !== 'not_achieved').map(g => (
-              <li key={g.id} className="individual-list-item">
-                {g.favorited && <span className="fav-star">★ </span>}{g.title}
-              </li>
-            ))}
-            {person1.filter(g => g.status !== 'done' && g.status !== 'not_achieved').length === 0 && (
-              <li className="individual-empty">Nenhum ainda</li>
-            )}
-          </ul>
-        </div>
-        <div className="individual-divider" />
-        <div className="individual-person">
-          <span className="individual-name">{settings.person2}</span>
-          <ul className="individual-list">
-            {person2.filter(g => g.status !== 'done' && g.status !== 'not_achieved').map(g => (
-              <li key={g.id} className="individual-list-item">
-                {g.favorited && <span className="fav-star">★ </span>}{g.title}
-              </li>
-            ))}
-            {person2.filter(g => g.status !== 'done' && g.status !== 'not_achieved').length === 0 && (
-              <li className="individual-empty">Nenhum ainda</li>
-            )}
-          </ul>
-        </div>
-      </div>
-    </div>
-
-    <QuickNotes notes={notes} settings={settings} reload={reload} />
   </div>
+
+  <div className="home-individual card">
+    <h2 className="home-card-title">Objetivos individuais</h2>
+    <div className="individual-row">
+      <div className="individual-person">
+        <span className="individual-name">{settings.person1}</span>
+        <ul className="individual-list">
+          {person1.filter(g => g.status !== 'done' && g.status !== 'not_achieved').map(g => (
+            <li key={g.id} className="individual-list-item">
+              {g.favorited && <span className="fav-star">★ </span>}{g.title}
+            </li>
+          ))}
+          {person1.filter(g => g.status !== 'done' && g.status !== 'not_achieved').length === 0 && (
+            <li className="individual-empty">Nenhum ainda</li>
+          )}
+        </ul>
+      </div>
+      <div className="individual-divider" />
+      <div className="individual-person">
+        <span className="individual-name">{settings.person2}</span>
+        <ul className="individual-list">
+          {person2.filter(g => g.status !== 'done' && g.status !== 'not_achieved').map(g => (
+            <li key={g.id} className="individual-list-item">
+              {g.favorited && <span className="fav-star">★ </span>}{g.title}
+            </li>
+          ))}
+          {person2.filter(g => g.status !== 'done' && g.status !== 'not_achieved').length === 0 && (
+            <li className="individual-empty">Nenhum ainda</li>
+          )}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
 
 </div>
 

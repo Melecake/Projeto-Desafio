@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { useToast } from '../components/Toast'
 import '../styles/discoveries.css'
 
@@ -73,7 +73,8 @@ function ReviewModal({ item, onClose, onSave }) {
         </div>
         <div className="form-group">
           <label>Review</label>
-          <textarea value={review} onChange={e => setReview(e.target.value)} placeholder="O que acharam?" rows={3} />
+          <textarea value={review} onChange={e => setReview(e.target.value)}
+            placeholder="O que acharam?" rows={3} />
         </div>
         <div className="modal-actions">
           <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
@@ -84,57 +85,8 @@ function ReviewModal({ item, onClose, onSave }) {
   )
 }
 
-function TmdbSearch({ category, onSelect }) {
-  const [query, setQuery]     = useState('')
-  const [results, setResults] = useState([])
-  const [loading, setLoading] = useState(false)
-
-  async function search() {
-    if (!query.trim()) return
-    setLoading(true)
-    const type = category === 'series' ? 'series' : 'movie'
-    const res  = await fetch(`/api/tmdb?query=${encodeURIComponent(query)}&type=${type}`)
-    const data = await res.json()
-    setResults(data || [])
-    setLoading(false)
-  }
-
-  return (
-    <div className="tmdb-search">
-      <div className="tmdb-search-row">
-        <input
-          type="text"
-          value={query}
-          onChange={e => setQuery(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && search()}
-          placeholder={`Buscar ${category === 'series' ? 'série' : 'filme'} no TMDB...`}
-        />
-        <button className="btn btn-ghost btn-sm" onClick={search} disabled={loading}>
-          {loading ? '...' : 'Buscar'}
-        </button>
-      </div>
-      {results.length > 0 && (
-        <div className="tmdb-results">
-          {results.map(r => (
-            <button key={r.id} className="tmdb-result" onClick={() => { onSelect(r); setResults([]) }}>
-              {r.poster && <img src={r.poster} alt="" className="tmdb-poster" />}
-              <div className="tmdb-info">
-                <span className="tmdb-title">{r.title}</span>
-                {r.year && <span className="tmdb-year">{r.year}</span>}
-                {r.rating && <span className="tmdb-rating">★ {r.rating}</span>}
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
 function ItemFormModal({ category, item, onClose, onSave }) {
   const isEdit = !!item
-  const showTmdb = !isEdit && (category === 'filmes' || category === 'series')
-
   const [form, setForm] = useState({
     title:       item?.title       || '',
     description: item?.description || '',
@@ -152,14 +104,9 @@ function ItemFormModal({ category, item, onClose, onSave }) {
     setTagInput('')
   }
 
-  function handleTmdbSelect(result) {
-    set('title', result.title)
-    set('description', result.overview?.slice(0, 200) || '')
-  }
-
   async function save() {
     if (!form.title.trim()) return
-    await onSave(form, item?.id)
+    await onSave(form)
     onClose()
   }
 
@@ -168,17 +115,10 @@ function ItemFormModal({ category, item, onClose, onSave }) {
       <div className="modal">
         <h2 className="modal-title">{isEdit ? 'Editar' : 'Adicionar'}</h2>
 
-        {showTmdb && (
-          <div className="form-group">
-            <label>Buscar automaticamente</label>
-            <TmdbSearch category={category} onSelect={handleTmdbSelect} />
-          </div>
-        )}
-
         <div className="form-group">
           <label>Nome</label>
           <input type="text" value={form.title} onChange={e => set('title', e.target.value)}
-            placeholder="Nome..." autoFocus={!showTmdb} />
+            placeholder="Nome..." autoFocus />
         </div>
 
         <div className="form-group">
@@ -223,6 +163,50 @@ function ItemFormModal({ category, item, onClose, onSave }) {
   )
 }
 
+function TmdbSearch({ category, onSelect }) {
+  const [query, setQuery]     = useState('')
+  const [results, setResults] = useState([])
+  const [loading, setLoading] = useState(false)
+
+  async function search() {
+    if (!query.trim()) return
+    setLoading(true)
+    const type = category === 'series' ? 'series' : 'movie'
+    const res  = await fetch(`/api/tmdb?query=${encodeURIComponent(query)}&type=${type}`)
+    const data = await res.json()
+    setResults(data || [])
+    setLoading(false)
+  }
+
+  return (
+    <div className="tmdb-search">
+      <div className="tmdb-search-row">
+        <input type="text" value={query} onChange={e => setQuery(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && search()}
+          placeholder={`Buscar ${category === 'series' ? 'série' : 'filme'} no TMDB...`} />
+        <button className="btn btn-ghost btn-sm" onClick={search} disabled={loading}>
+          {loading ? '...' : 'Buscar'}
+        </button>
+      </div>
+      {results.length > 0 && (
+        <div className="tmdb-results">
+          {results.map(r => (
+            <button key={r.id} className="tmdb-result"
+              onClick={() => { onSelect(r); setResults([]) }}>
+              {r.poster && <img src={r.poster} alt="" className="tmdb-poster" />}
+              <div className="tmdb-info">
+                <span className="tmdb-title">{r.title}</span>
+                {r.year && <span className="tmdb-year">{r.year}</span>}
+                {r.rating && <span className="tmdb-rating">★ {r.rating}</span>}
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function DiscoveryCard({ item, cat, onMarkDone, onDelete, onUndone, onEdit, onToggleFav }) {
   const [reviewModal, setReviewModal] = useState(false)
 
@@ -262,12 +246,14 @@ function DiscoveryCard({ item, cat, onMarkDone, onDelete, onUndone, onEdit, onTo
             </div>
           )}
           {item.review && <p className="discovery-review">"{item.review}"</p>}
-          <button className="btn btn-ghost btn-sm" style={{ marginTop: '0.5rem' }} onClick={() => onUndone(item.id)}>
+          <button className="btn btn-ghost btn-sm" style={{ marginTop: '0.5rem' }}
+            onClick={() => onUndone(item.id)}>
             Desfazer
           </button>
         </div>
       ) : (
-        <button className="btn btn-ghost btn-sm discovery-action-btn" onClick={() => setReviewModal(true)}>
+        <button className="btn btn-ghost btn-sm discovery-action-btn"
+          onClick={() => setReviewModal(true)}>
           {cat.actionLabel}
         </button>
       )}
@@ -275,17 +261,18 @@ function DiscoveryCard({ item, cat, onMarkDone, onDelete, onUndone, onEdit, onTo
   )
 }
 
-function CategorySection({ cat, items, onAdd, onMarkDone, onDelete, onUndone, onEdit, onToggleFav }) {
+function CategorySection({ cat, items, onAdd, onEdit, onMarkDone, onDelete, onUndone, onToggleFav }) {
   const [collapsed, setCollapsed] = useState(false)
   const [addModal, setAddModal]   = useState(false)
   const [editItem, setEditItem]   = useState(null)
   const [sort, setSort]           = useState('date_desc')
   const [search, setSearch]       = useState('')
-  const toast = useToast()
 
   const pending = items.filter(i => !i.done)
   const done    = items.filter(i => i.done)
   const avg     = avgRating(items)
+
+  const showTmdb = cat.id === 'filmes' || cat.id === 'series'
 
   const filterAndSort = list => sortItems(
     search ? list.filter(i =>
@@ -295,32 +282,38 @@ function CategorySection({ cat, items, onAdd, onMarkDone, onDelete, onUndone, on
     sort
   )
 
-  async function handleAdd(form) {
-    await onAdd({ ...form, category: cat.id })
-    setAddModal(false)
-  }
-
-  async function handleEdit(form, id) {
-    await onEdit(form, id)
-    setEditItem(null)
-    toast('Item atualizado')
-  }
-
   return (
     <div className="discovery-section">
       {addModal && (
-        <ItemFormModal
-          category={cat.id}
-          onClose={() => setAddModal(false)}
-          onSave={handleAdd}
-        />
+        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setAddModal(false)}>
+          <div className="modal">
+            <h2 className="modal-title">Adicionar em {cat.label}</h2>
+
+            {showTmdb && (
+              <AddWithTmdb
+                cat={cat}
+                onSave={form => { onAdd({ ...form, category: cat.id }); setAddModal(false) }}
+                onClose={() => setAddModal(false)}
+              />
+            )}
+
+            {!showTmdb && (
+              <AddSimple
+                cat={cat}
+                onSave={form => { onAdd({ ...form, category: cat.id }); setAddModal(false) }}
+                onClose={() => setAddModal(false)}
+              />
+            )}
+          </div>
+        </div>
       )}
+
       {editItem && (
         <ItemFormModal
           category={cat.id}
           item={editItem}
           onClose={() => setEditItem(null)}
-          onSave={handleEdit}
+          onSave={form => { onEdit(form, editItem.id); setEditItem(null) }}
         />
       )}
 
@@ -384,18 +377,132 @@ function CategorySection({ cat, items, onAdd, onMarkDone, onDelete, onUndone, on
   )
 }
 
+// Formulário simples (sem TMDB)
+function AddSimple({ cat, onSave, onClose }) {
+  const [form, setForm] = useState({ title: '', description: '', tags: [] })
+  const [tagInput, setTagInput] = useState('')
+  function set(key, val) { setForm(f => ({ ...f, [key]: val })) }
+
+  function addTag() {
+    const t = tagInput.trim().toLowerCase()
+    if (!t || form.tags.includes(t)) return
+    set('tags', [...form.tags, t])
+    setTagInput('')
+  }
+
+  return (
+    <>
+      <div className="form-group">
+        <label>Nome</label>
+        <input type="text" value={form.title} onChange={e => set('title', e.target.value)}
+          placeholder="Nome..." autoFocus />
+      </div>
+      <div className="form-group">
+        <label>Descrição</label>
+        <textarea value={form.description} onChange={e => set('description', e.target.value)}
+          placeholder="Uma frase sobre esse item..." rows={2} />
+      </div>
+      <div className="form-group">
+        <label>Tags</label>
+        <div className="tags-list" style={{ marginBottom: '0.35rem' }}>
+          {form.tags.map(t => (
+            <span key={t} className="tag-chip">
+              {t}
+              <button className="tag-remove" onClick={() => set('tags', form.tags.filter(x => x !== t))}>×</button>
+            </span>
+          ))}
+        </div>
+        <div className="tag-input-row">
+          <input type="text" value={tagInput} onChange={e => setTagInput(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addTag())}
+            placeholder="Adicionar tag..." />
+          <button className="btn btn-ghost btn-sm" onClick={addTag}>+</button>
+        </div>
+      </div>
+      <div className="modal-actions">
+        <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
+        <button className="btn btn-primary" onClick={() => form.title.trim() && onSave(form)}>Salvar</button>
+      </div>
+    </>
+  )
+}
+
+// Formulário com TMDB (filmes e séries)
+function AddWithTmdb({ cat, onSave, onClose }) {
+  const [form, setForm] = useState({ title: '', description: '', tags: [] })
+  const [tagInput, setTagInput] = useState('')
+  function set(key, val) { setForm(f => ({ ...f, [key]: val })) }
+
+  function addTag() {
+    const t = tagInput.trim().toLowerCase()
+    if (!t || form.tags.includes(t)) return
+    set('tags', [...form.tags, t])
+    setTagInput('')
+  }
+
+  function handleTmdbSelect(result) {
+    set('title', result.title)
+    set('description', result.overview?.slice(0, 200) || '')
+  }
+
+  return (
+    <>
+      <div className="form-group">
+        <label>Buscar automaticamente</label>
+        <TmdbSearch category={cat.id} onSelect={handleTmdbSelect} />
+      </div>
+      <div className="form-group">
+        <label>Nome</label>
+        <input type="text" value={form.title} onChange={e => set('title', e.target.value)}
+          placeholder="Nome..." />
+      </div>
+      <div className="form-group">
+        <label>Descrição</label>
+        <textarea value={form.description} onChange={e => set('description', e.target.value)}
+          placeholder="Uma frase sobre esse item..." rows={2} />
+      </div>
+      <div className="form-group">
+        <label>Tags</label>
+        <div className="tags-list" style={{ marginBottom: '0.35rem' }}>
+          {form.tags.map(t => (
+            <span key={t} className="tag-chip">
+              {t}
+              <button className="tag-remove" onClick={() => set('tags', form.tags.filter(x => x !== t))}>×</button>
+            </span>
+          ))}
+        </div>
+        <div className="tag-input-row">
+          <input type="text" value={tagInput} onChange={e => setTagInput(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addTag())}
+            placeholder="Adicionar tag..." />
+          <button className="btn btn-ghost btn-sm" onClick={addTag}>+</button>
+        </div>
+      </div>
+      <div className="modal-actions">
+        <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
+        <button className="btn btn-primary" onClick={() => form.title.trim() && onSave(form)}>Salvar</button>
+      </div>
+    </>
+  )
+}
+
 export default function Discoveries({ data, reload }) {
   const discoveries = data.discoveries || []
   const toast = useToast()
 
   async function addItem(form) {
-    await fetch('/api/discoveries', {
+    const res = await fetch('/api/discoveries', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form)
     })
-    toast('Item adicionado')
-    reload()
+    const result = await res.json()
+    if (result.id) {
+      toast('Item adicionado')
+      reload()
+    } else {
+      toast('Erro ao adicionar item', 'error')
+    }
   }
 
   async function editItem(form, id) {
@@ -459,10 +566,10 @@ export default function Discoveries({ data, reload }) {
           cat={cat}
           items={discoveries.filter(d => d.category === cat.id)}
           onAdd={addItem}
+          onEdit={editItem}
           onMarkDone={markDone}
           onDelete={deleteItem}
           onUndone={markUndone}
-          onEdit={editItem}
           onToggleFav={toggleFav}
         />
       ))}
