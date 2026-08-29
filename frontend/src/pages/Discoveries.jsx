@@ -39,20 +39,119 @@ function sortItems(items, sort) {
   })
 }
 
+// ── Meia estrela ──────────────────────────────────────────────────────────────
 function StarRating({ value, onChange }) {
   const [hovered, setHovered] = useState(null)
   const display = hovered ?? value ?? 0
+
+  function handleMouseMove(e, n) {
+    const rect = e.currentTarget.getBoundingClientRect()
+    const half = e.clientX < rect.left + rect.width / 2
+    setHovered(half ? n - 0.5 : n)
+  }
+
+  function handleClick(e, n) {
+    const rect = e.currentTarget.getBoundingClientRect()
+    const half = e.clientX < rect.left + rect.width / 2
+    onChange(half ? n - 0.5 : n)
+  }
+
   return (
     <div className="star-rating">
-      {[1,2,3,4,5].map(n => (
-        <button key={n} className={`star-btn ${n <= display ? 'filled' : ''}`}
-          onClick={() => onChange(n)} onMouseEnter={() => setHovered(n)}
-          onMouseLeave={() => setHovered(null)} type="button">★</button>
-      ))}
+      {[1,2,3,4,5].map(n => {
+        const full = display >= n
+        const half = !full && display >= n - 0.5
+        return (
+          <button
+            key={n}
+            type="button"
+            className={`star-btn ${full ? 'filled' : half ? 'half' : ''}`}
+            onMouseMove={e => handleMouseMove(e, n)}
+            onMouseLeave={() => setHovered(null)}
+            onClick={e => handleClick(e, n)}
+          >
+            ★
+          </button>
+        )
+      })}
     </div>
   )
 }
 
+// ── Exibição de estrelas (suporta meia) ───────────────────────────────────────
+function StarDisplay({ value }) {
+  if (!value) return null
+  return (
+    <div className="discovery-stars">
+      {[1,2,3,4,5].map(n => {
+        const full = value >= n
+        const half = !full && value >= n - 0.5
+        return (
+          <span key={n} className={`star-display ${full ? 'filled' : half ? 'half' : ''}`}>
+            {half ? '½' : '★'}
+          </span>
+        )
+      })}
+      <span className="star-value">{value}</span>
+    </div>
+  )
+}
+
+// ── Modal de detalhes ─────────────────────────────────────────────────────────
+function DetailModal({ item, cat, onClose, onMarkDone, onUndone }) {
+  const [reviewModal, setReviewModal] = useState(false)
+
+  return (
+    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal detail-modal">
+        {reviewModal && (
+          <ReviewModal item={item} onClose={() => setReviewModal(false)} onSave={onMarkDone} />
+        )}
+
+        {item.poster && (
+          <div className="detail-poster">
+            <img src={item.poster} alt={item.title} />
+          </div>
+        )}
+
+        <div className="detail-header">
+          <h2 className="detail-title">{item.title}</h2>
+          <button className="reading-close" onClick={onClose}>×</button>
+        </div>
+
+        {item.description && (
+          <p className="detail-description">{item.description}</p>
+        )}
+
+        {item.tags && item.tags.length > 0 && (
+          <div className="goal-tags" style={{ marginBottom: '0.75rem' }}>
+            {item.tags.map(t => <span key={t} className="tag-chip readonly">{t}</span>)}
+          </div>
+        )}
+
+        <p className="detail-date">Adicionado em {formatDate(item.created_at)}</p>
+
+        {item.done ? (
+          <div className="discovery-done-info" style={{ marginTop: '0.75rem' }}>
+            <StarDisplay value={item.rating} />
+            {item.review && <p className="discovery-review">"{item.review}"</p>}
+            <button className="btn btn-ghost btn-sm" style={{ marginTop: '0.5rem' }}
+              onClick={() => { onUndone(item.id); onClose() }}>
+              Desfazer
+            </button>
+          </div>
+        ) : (
+          <button className="btn btn-primary btn-sm" style={{ marginTop: '0.75rem' }}
+            onClick={() => setReviewModal(true)}>
+            {cat.actionLabel}
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ── Review modal ──────────────────────────────────────────────────────────────
 function ReviewModal({ item, onClose, onSave }) {
   const [rating, setRating] = useState(item.rating || null)
   const [review, setReview] = useState(item.review || '')
@@ -70,6 +169,7 @@ function ReviewModal({ item, onClose, onSave }) {
         <div className="form-group">
           <label>Nota</label>
           <StarRating value={rating} onChange={setRating} />
+          {rating && <p className="rating-value-hint">{rating} estrela{rating !== 1 ? 's' : ''}</p>}
         </div>
         <div className="form-group">
           <label>Review</label>
@@ -85,6 +185,7 @@ function ReviewModal({ item, onClose, onSave }) {
   )
 }
 
+// ── Item form modal ───────────────────────────────────────────────────────────
 function ItemFormModal({ category, item, onClose, onSave }) {
   const isEdit = !!item
   const [form, setForm] = useState({
@@ -92,6 +193,7 @@ function ItemFormModal({ category, item, onClose, onSave }) {
     description: item?.description || '',
     tags:        item?.tags        || [],
     category:    item?.category    || category,
+    poster:      item?.poster      || '',
   })
   const [tagInput, setTagInput] = useState('')
 
@@ -163,7 +265,9 @@ function ItemFormModal({ category, item, onClose, onSave }) {
   )
 }
 
+// ── TMDB search ───────────────────────────────────────────────────────────────
 function TmdbSearch({ category, onSelect }) {
+  const [open, setOpen]       = useState(false)
   const [query, setQuery]     = useState('')
   const [results, setResults] = useState([])
   const [loading, setLoading] = useState(false)
@@ -178,21 +282,28 @@ function TmdbSearch({ category, onSelect }) {
     setLoading(false)
   }
 
+  if (!open) return (
+    <button className="tmdb-lupa-btn" onClick={() => setOpen(true)} title="Buscar no TMDB">
+      🔍
+    </button>
+  )
+
   return (
     <div className="tmdb-search">
       <div className="tmdb-search-row">
         <input type="text" value={query} onChange={e => setQuery(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && search()}
-          placeholder={`Buscar ${category === 'series' ? 'série' : 'filme'} no TMDB...`} />
+          onKeyDown={e => e.key === 'Enter' && search()} autoFocus
+          placeholder={`Buscar ${category === 'series' ? 'série' : 'filme'}...`} />
         <button className="btn btn-ghost btn-sm" onClick={search} disabled={loading}>
           {loading ? '...' : 'Buscar'}
         </button>
+        <button className="btn btn-ghost btn-sm" onClick={() => { setOpen(false); setResults([]) }}>✕</button>
       </div>
       {results.length > 0 && (
         <div className="tmdb-results">
           {results.map(r => (
             <button key={r.id} className="tmdb-result"
-              onClick={() => { onSelect(r); setResults([]) }}>
+              onClick={() => { onSelect(r); setResults([]); setOpen(false) }}>
               {r.poster && <img src={r.poster} alt="" className="tmdb-poster" />}
               <div className="tmdb-info">
                 <span className="tmdb-title">{r.title}</span>
@@ -207,62 +318,219 @@ function TmdbSearch({ category, onSelect }) {
   )
 }
 
+// ── Add simples (receitas, livros, jogos) ─────────────────────────────────────
+function AddSimple({ cat, onSave, onClose }) {
+  const [form, setForm] = useState({ title: '', description: '', tags: [] })
+  const [tagInput, setTagInput] = useState('')
+  function set(key, val) { setForm(f => ({ ...f, [key]: val })) }
+
+  function addTag() {
+    const t = tagInput.trim().toLowerCase()
+    if (!t || form.tags.includes(t)) return
+    set('tags', [...form.tags, t])
+    setTagInput('')
+  }
+
+  return (
+    <>
+      <div className="form-group">
+        <label>Nome</label>
+        <input type="text" value={form.title} onChange={e => set('title', e.target.value)}
+          placeholder="Nome..." autoFocus />
+      </div>
+      <div className="form-group">
+        <label>Descrição</label>
+        <textarea value={form.description} onChange={e => set('description', e.target.value)}
+          placeholder="Uma frase sobre esse item..." rows={2} />
+      </div>
+      <div className="form-group">
+        <label>Tags</label>
+        <div className="tags-list" style={{ marginBottom: '0.35rem' }}>
+          {form.tags.map(t => (
+            <span key={t} className="tag-chip">
+              {t}
+              <button className="tag-remove" onClick={() => set('tags', form.tags.filter(x => x !== t))}>×</button>
+            </span>
+          ))}
+        </div>
+        <div className="tag-input-row">
+          <input type="text" value={tagInput} onChange={e => setTagInput(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addTag())}
+            placeholder="Adicionar tag..." />
+          <button className="btn btn-ghost btn-sm" onClick={addTag}>+</button>
+        </div>
+      </div>
+      <div className="modal-actions">
+        <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
+        <button className="btn btn-primary" onClick={() => form.title.trim() && onSave(form)}>Salvar</button>
+      </div>
+    </>
+  )
+}
+
+// ── Add com TMDB (filmes e séries) ────────────────────────────────────────────
+function AddWithTmdb({ cat, onSave, onClose }) {
+  const [form, setForm] = useState({ title: '', description: '', tags: [], poster: '' })
+  const [tagInput, setTagInput] = useState('')
+  function set(key, val) { setForm(f => ({ ...f, [key]: val })) }
+
+  function addTag() {
+    const t = tagInput.trim().toLowerCase()
+    if (!t || form.tags.includes(t)) return
+    set('tags', [...form.tags, t])
+    setTagInput('')
+  }
+
+  function handleTmdbSelect(result) {
+    set('title', result.title)
+    set('description', result.overview?.slice(0, 200) || '')
+    set('poster', result.poster || '')
+  }
+
+  return (
+    <>
+      <div className="form-group tmdb-row">
+        <label>Buscar no TMDB</label>
+        <TmdbSearch category={cat.id} onSelect={handleTmdbSelect} />
+      </div>
+
+      {form.poster && (
+        <div className="form-poster-preview">
+          <img src={form.poster} alt="" />
+        </div>
+      )}
+
+      <div className="form-group">
+        <label>Nome</label>
+        <input type="text" value={form.title} onChange={e => set('title', e.target.value)}
+          placeholder="Nome..." />
+      </div>
+      <div className="form-group">
+        <label>Descrição</label>
+        <textarea value={form.description} onChange={e => set('description', e.target.value)}
+          placeholder="Uma frase sobre esse item..." rows={2} />
+      </div>
+      <div className="form-group">
+        <label>Tags</label>
+        <div className="tags-list" style={{ marginBottom: '0.35rem' }}>
+          {form.tags.map(t => (
+            <span key={t} className="tag-chip">
+              {t}
+              <button className="tag-remove" onClick={() => set('tags', form.tags.filter(x => x !== t))}>×</button>
+            </span>
+          ))}
+        </div>
+        <div className="tag-input-row">
+          <input type="text" value={tagInput} onChange={e => setTagInput(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addTag())}
+            placeholder="Adicionar tag..." />
+          <button className="btn btn-ghost btn-sm" onClick={addTag}>+</button>
+        </div>
+      </div>
+      <div className="modal-actions">
+        <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
+        <button className="btn btn-primary" onClick={() => form.title.trim() && onSave(form)}>Salvar</button>
+      </div>
+    </>
+  )
+}
+
+// ── Discovery card ────────────────────────────────────────────────────────────
 function DiscoveryCard({ item, cat, onMarkDone, onDelete, onUndone, onEdit, onToggleFav }) {
-  const [reviewModal, setReviewModal] = useState(false)
+  const [detailOpen, setDetailOpen] = useState(false)
+  const hasPoster = !!item.poster
+  const descLimit = 80
 
   return (
     <div className="discovery-card card">
-      {reviewModal && (
-        <ReviewModal item={item} onClose={() => setReviewModal(false)} onSave={onMarkDone} />
+      {detailOpen && (
+        <DetailModal
+          item={item}
+          cat={cat}
+          onClose={() => setDetailOpen(false)}
+          onMarkDone={onMarkDone}
+          onUndone={onUndone}
+        />
       )}
 
-      <div className="discovery-card-header">
-        <h3 className="discovery-card-title">{item.title}</h3>
-        <div className="discovery-card-actions">
-          <button className={`fav-btn ${item.favorited ? 'active' : ''}`}
-            onClick={() => onToggleFav(item.id, !item.favorited)}>★</button>
-          {!item.done && <button className="discovery-edit" onClick={() => onEdit(item)}>✎</button>}
-          <button className="discovery-del" onClick={() => onDelete(item.id)}>×</button>
-        </div>
-      </div>
-
-      {item.description && <p className="discovery-card-desc">{item.description}</p>}
-
-      {item.tags && item.tags.length > 0 && (
-        <div className="goal-tags">
-          {item.tags.map(t => <span key={t} className="tag-chip readonly">{t}</span>)}
-        </div>
-      )}
-
-      <p className="discovery-card-date">Adicionado em {formatDate(item.created_at)}</p>
-
-      {item.done ? (
-        <div className="discovery-done-info">
-          {item.rating && (
-            <div className="discovery-stars">
-              {[1,2,3,4,5].map(n => (
-                <span key={n} className={`star-display ${n <= item.rating ? 'filled' : ''}`}>★</span>
-              ))}
+      {/* Poster ou sem imagem */}
+      {hasPoster && (
+        <div className="discovery-card-poster" onClick={() => setDetailOpen(true)}>
+          <img src={item.poster} alt={item.title} />
+          {item.done && (
+            <div className="discovery-card-poster-badge">
+              {item.status === 'not_achieved' ? '✗' : '✓'}
             </div>
           )}
-          {item.review && <p className="discovery-review">"{item.review}"</p>}
-          <button className="btn btn-ghost btn-sm" style={{ marginTop: '0.5rem' }}
-            onClick={() => onUndone(item.id)}>
-            Desfazer
-          </button>
         </div>
-      ) : (
-        <button className="btn btn-ghost btn-sm discovery-action-btn"
-          onClick={() => setReviewModal(true)}>
-          {cat.actionLabel}
-        </button>
       )}
+
+      <div className="discovery-card-body">
+        <div className="discovery-card-header">
+          <h3 className="discovery-card-title" onClick={() => setDetailOpen(true)}
+            style={{ cursor: 'pointer' }}>
+            {item.title}
+          </h3>
+          <div className="discovery-card-actions">
+            <button className={`fav-btn ${item.favorited ? 'active' : ''}`}
+              onClick={() => onToggleFav(item.id, !item.favorited)}>★</button>
+            {!item.done && <button className="discovery-edit" onClick={() => onEdit(item)}>✎</button>}
+            <button className="discovery-del" onClick={() => onDelete(item.id)}>×</button>
+          </div>
+        </div>
+
+        {/* Descrição truncada — só se não tiver poster */}
+        {!hasPoster && item.description && (
+          <p className="discovery-card-desc">
+            {item.description.length > descLimit
+              ? <>{item.description.slice(0, descLimit)}…{' '}
+                  <button className="desc-more" onClick={() => setDetailOpen(true)}>ver mais</button>
+                </>
+              : item.description
+            }
+          </p>
+        )}
+
+        {item.tags && item.tags.length > 0 && (
+          <div className="goal-tags">
+            {item.tags.map(t => <span key={t} className="tag-chip readonly">{t}</span>)}
+          </div>
+        )}
+
+        <p className="discovery-card-date">Adicionado em {formatDate(item.created_at)}</p>
+
+        {item.done ? (
+          <div className="discovery-done-info">
+            <StarDisplay value={item.rating} />
+            {item.review && (
+              <p className="discovery-review">
+                {item.review.length > 80
+                  ? <>{item.review.slice(0, 80)}…{' '}
+                      <button className="desc-more" onClick={() => setDetailOpen(true)}>ver mais</button>
+                    </>
+                  : `"${item.review}"`
+                }
+              </p>
+            )}
+            <button className="btn btn-ghost btn-sm" style={{ marginTop: '0.5rem' }}
+              onClick={() => onUndone(item.id)}>
+              Desfazer
+            </button>
+          </div>
+        ) : (
+          <button className="btn btn-ghost btn-sm discovery-action-btn"
+            onClick={() => setDetailOpen(true)}>
+            {cat.actionLabel}
+          </button>
+        )}
+      </div>
     </div>
   )
 }
 
+// ── Category section ──────────────────────────────────────────────────────────
 function CategorySection({ cat, items, onAdd, onEdit, onMarkDone, onDelete, onUndone, onToggleFav }) {
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed] = useState(true) // começa fechado
   const [addModal, setAddModal]   = useState(false)
   const [editItem, setEditItem]   = useState(null)
   const [sort, setSort]           = useState('date_desc')
@@ -271,7 +539,6 @@ function CategorySection({ cat, items, onAdd, onEdit, onMarkDone, onDelete, onUn
   const pending = items.filter(i => !i.done)
   const done    = items.filter(i => i.done)
   const avg     = avgRating(items)
-
   const showTmdb = cat.id === 'filmes' || cat.id === 'series'
 
   const filterAndSort = list => sortItems(
@@ -288,39 +555,31 @@ function CategorySection({ cat, items, onAdd, onEdit, onMarkDone, onDelete, onUn
         <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setAddModal(false)}>
           <div className="modal">
             <h2 className="modal-title">Adicionar em {cat.label}</h2>
-
-            {showTmdb && (
-              <AddWithTmdb
-                cat={cat}
-                onSave={form => { onAdd({ ...form, category: cat.id }); setAddModal(false) }}
-                onClose={() => setAddModal(false)}
-              />
-            )}
-
-            {!showTmdb && (
-              <AddSimple
-                cat={cat}
-                onSave={form => { onAdd({ ...form, category: cat.id }); setAddModal(false) }}
-                onClose={() => setAddModal(false)}
-              />
-            )}
+            {showTmdb
+              ? <AddWithTmdb cat={cat}
+                  onSave={form => { onAdd({ ...form, category: cat.id }); setAddModal(false) }}
+                  onClose={() => setAddModal(false)} />
+              : <AddSimple cat={cat}
+                  onSave={form => { onAdd({ ...form, category: cat.id }); setAddModal(false) }}
+                  onClose={() => setAddModal(false)} />
+            }
           </div>
         </div>
       )}
 
       {editItem && (
-        <ItemFormModal
-          category={cat.id}
-          item={editItem}
+        <ItemFormModal category={cat.id} item={editItem}
           onClose={() => setEditItem(null)}
-          onSave={form => { onEdit(form, editItem.id); setEditItem(null) }}
-        />
+          onSave={form => { onEdit(form, editItem.id); setEditItem(null) }} />
       )}
 
       <div className="discovery-section-header">
         <button className="discovery-section-toggle" onClick={() => setCollapsed(c => !c)}>
           <span className="discovery-section-title">{cat.label}</span>
-          {avg && <span className="discovery-avg">média {avg}★</span>}
+          <span className="discovery-section-count">
+            {items.length > 0 && `${items.length} item${items.length > 1 ? 's' : ''}`}
+          </span>
+          {avg && <span className="discovery-avg">· média {avg}★</span>}
           <span className="section-chevron">{collapsed ? '▼' : '▲'}</span>
         </button>
         <button className="btn btn-primary btn-sm" onClick={() => setAddModal(true)}>+ Adicionar</button>
@@ -377,115 +636,7 @@ function CategorySection({ cat, items, onAdd, onEdit, onMarkDone, onDelete, onUn
   )
 }
 
-// Formulário simples (sem TMDB)
-function AddSimple({ cat, onSave, onClose }) {
-  const [form, setForm] = useState({ title: '', description: '', tags: [] })
-  const [tagInput, setTagInput] = useState('')
-  function set(key, val) { setForm(f => ({ ...f, [key]: val })) }
-
-  function addTag() {
-    const t = tagInput.trim().toLowerCase()
-    if (!t || form.tags.includes(t)) return
-    set('tags', [...form.tags, t])
-    setTagInput('')
-  }
-
-  return (
-    <>
-      <div className="form-group">
-        <label>Nome</label>
-        <input type="text" value={form.title} onChange={e => set('title', e.target.value)}
-          placeholder="Nome..." autoFocus />
-      </div>
-      <div className="form-group">
-        <label>Descrição</label>
-        <textarea value={form.description} onChange={e => set('description', e.target.value)}
-          placeholder="Uma frase sobre esse item..." rows={2} />
-      </div>
-      <div className="form-group">
-        <label>Tags</label>
-        <div className="tags-list" style={{ marginBottom: '0.35rem' }}>
-          {form.tags.map(t => (
-            <span key={t} className="tag-chip">
-              {t}
-              <button className="tag-remove" onClick={() => set('tags', form.tags.filter(x => x !== t))}>×</button>
-            </span>
-          ))}
-        </div>
-        <div className="tag-input-row">
-          <input type="text" value={tagInput} onChange={e => setTagInput(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addTag())}
-            placeholder="Adicionar tag..." />
-          <button className="btn btn-ghost btn-sm" onClick={addTag}>+</button>
-        </div>
-      </div>
-      <div className="modal-actions">
-        <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
-        <button className="btn btn-primary" onClick={() => form.title.trim() && onSave(form)}>Salvar</button>
-      </div>
-    </>
-  )
-}
-
-// Formulário com TMDB (filmes e séries)
-function AddWithTmdb({ cat, onSave, onClose }) {
-  const [form, setForm] = useState({ title: '', description: '', tags: [] })
-  const [tagInput, setTagInput] = useState('')
-  function set(key, val) { setForm(f => ({ ...f, [key]: val })) }
-
-  function addTag() {
-    const t = tagInput.trim().toLowerCase()
-    if (!t || form.tags.includes(t)) return
-    set('tags', [...form.tags, t])
-    setTagInput('')
-  }
-
-  function handleTmdbSelect(result) {
-    set('title', result.title)
-    set('description', result.overview?.slice(0, 200) || '')
-  }
-
-  return (
-    <>
-      <div className="form-group">
-        <label>Buscar automaticamente</label>
-        <TmdbSearch category={cat.id} onSelect={handleTmdbSelect} />
-      </div>
-      <div className="form-group">
-        <label>Nome</label>
-        <input type="text" value={form.title} onChange={e => set('title', e.target.value)}
-          placeholder="Nome..." />
-      </div>
-      <div className="form-group">
-        <label>Descrição</label>
-        <textarea value={form.description} onChange={e => set('description', e.target.value)}
-          placeholder="Uma frase sobre esse item..." rows={2} />
-      </div>
-      <div className="form-group">
-        <label>Tags</label>
-        <div className="tags-list" style={{ marginBottom: '0.35rem' }}>
-          {form.tags.map(t => (
-            <span key={t} className="tag-chip">
-              {t}
-              <button className="tag-remove" onClick={() => set('tags', form.tags.filter(x => x !== t))}>×</button>
-            </span>
-          ))}
-        </div>
-        <div className="tag-input-row">
-          <input type="text" value={tagInput} onChange={e => setTagInput(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addTag())}
-            placeholder="Adicionar tag..." />
-          <button className="btn btn-ghost btn-sm" onClick={addTag}>+</button>
-        </div>
-      </div>
-      <div className="modal-actions">
-        <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
-        <button className="btn btn-primary" onClick={() => form.title.trim() && onSave(form)}>Salvar</button>
-      </div>
-    </>
-  )
-}
-
+// ── Export ────────────────────────────────────────────────────────────────────
 export default function Discoveries({ data, reload }) {
   const discoveries = data.discoveries || []
   const toast = useToast()
@@ -501,7 +652,8 @@ export default function Discoveries({ data, reload }) {
       toast('Item adicionado')
       reload()
     } else {
-      toast('Erro ao adicionar item', 'error')
+      toast('Erro ao adicionar', 'error')
+      console.error(result)
     }
   }
 

@@ -189,7 +189,7 @@ function EmptySection({ label }) {
 }
 
 function GoalSection({ label, sub, goals, person1, person2, onClose, onDelete, onEdit, onToggleFav, searchTerm }) {
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed] = useState(true)
 
   const filtered = searchTerm
     ? goals.filter(g => g.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
